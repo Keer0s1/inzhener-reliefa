@@ -153,6 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initLogsAndReminderControls();
     initPrivacyAndShareModals();
     renderScientificSources();
+    applyGenderTheme();
 
     recalcMetabolic();
     recalcBodyweight();
@@ -290,12 +291,45 @@ function saveUserState() {
 /**
  * Визуальная заливка трека всех ползунков слева направо (#2EC5F0)
  */
+function getThemePalette() {
+  if (state.gender === "female") {
+    return {
+      accent: "#F472B6",
+      bright: "#F9A8D4",
+      fill: "rgba(244, 114, 182, 0.18)",
+      track: "#261B24",
+      bgHeader: "#0E090D"
+    };
+  }
+  return {
+    accent: "#E11D48",
+    bright: "#FB7185",
+    fill: "rgba(225, 29, 72, 0.16)",
+    track: "#1A171D",
+    bgHeader: "#070709"
+  };
+}
+
+function applyGenderTheme() {
+  document.body.setAttribute("data-gender", state.gender);
+  document.querySelectorAll("#genderSwitch .seg-opt").forEach((b) => {
+    b.classList.toggle("active", b.dataset.val === state.gender);
+  });
+  const pal = getThemePalette();
+  if (tg) {
+    if (tg.setHeaderColor) tg.setHeaderColor(pal.bgHeader);
+    if (tg.setBackgroundColor) tg.setBackgroundColor(pal.bgHeader);
+  }
+  updateAllSliderFills();
+}
+
 function updateSliderFill(sliderEl) {
   const min = parseFloat(sliderEl.min) || 0;
   const max = parseFloat(sliderEl.max) || 100;
   const val = parseFloat(sliderEl.value) || 0;
   const pct = Math.max(0, Math.min(100, ((val - min) / (max - min)) * 100));
-  sliderEl.style.background = `linear-gradient(90deg, #FF5526 0%, #FF5526 ${pct}%, #202227 ${pct}%, #202227 100%)`;
+  const pal = getThemePalette();
+  sliderEl.style.background = `linear-gradient(90deg, ${pal.accent} 0%, ${pal.bright} ${pct}%, ${pal.track} ${pct}%, ${pal.track} 100%)`;
 }
 
 function updateAllSliderFills() {
@@ -303,13 +337,14 @@ function updateAllSliderFills() {
 }
 
 /**
- * Инженерный SVG-силуэт торса, меняющий ширину талии и рельеф пресса в зависимости от выбранного BF%
+ * Инженерный SVG-силуэт торса, меняющий ширину талии, пропорции и палитру (Мужской / Женский)
  */
 function renderBodyFatBlueprint() {
   const container = document.getElementById("bfSilhouetteSvg");
   if (!container) return;
 
   const { bf, weight, height, gender } = state;
+  const pal = getThemePalette();
   const bmi = Formulas.calcBMI(weight, height);
   const fatKg = +((weight * bf) / 100).toFixed(1);
 
@@ -325,7 +360,6 @@ function renderBodyFatBlueprint() {
   };
   document.getElementById("bpLiveVisualDesc").textContent = descMap[bf] || descMap[15];
 
-  // Геометрия талии торса (x-координата от центра 48): чем выше BF%, тем шире контур талии
   let waistHalf = 15;
   let absOpacity = 0.85;
   if (bf <= 10) { waistHalf = 13; absOpacity = 0.95; }
@@ -334,8 +368,8 @@ function renderBodyFatBlueprint() {
   else if (bf <= 26) { waistHalf = 22.5; absOpacity = 0.08; }
   else { waistHalf = 26.5; absOpacity = 0.0; }
 
-  const shoulderHalf = gender === "male" ? 24 : 20;
-  const hipHalf = gender === "male" ? 17 : 21;
+  const shoulderHalf = gender === "male" ? 24 : 19.5;
+  const hipHalf = gender === "male" ? 17 : 21.5;
 
   const leftShoulder = 48 - shoulderHalf;
   const rightShoulder = 48 + shoulderHalf;
@@ -346,10 +380,8 @@ function renderBodyFatBlueprint() {
 
   container.innerHTML = `
     <svg viewBox="0 0 96 104" width="88" height="96">
-      <!-- Инженерные оси -->
-      <line x1="48" y1="6" x2="48" y2="98" stroke="rgba(46,197,240,0.2)" stroke-dasharray="2,2" stroke-width="1"/>
-      <line x1="12" y1="62" x2="84" y2="62" stroke="rgba(46,197,240,0.25)" stroke-dasharray="2,2" stroke-width="1"/>
-      <!-- Контур торса -->
+      <line x1="48" y1="6" x2="48" y2="98" stroke="rgba(255,255,255,0.14)" stroke-dasharray="2,2" stroke-width="1"/>
+      <line x1="12" y1="62" x2="84" y2="62" stroke="rgba(255,255,255,0.18)" stroke-dasharray="2,2" stroke-width="1"/>
       <path d="M ${leftShoulder} 22
                C ${leftShoulder - 4} 32, ${leftWaist} 46, ${leftWaist} 62
                C ${leftWaist} 74, ${leftHip} 82, ${leftHip} 92
@@ -357,12 +389,10 @@ function renderBodyFatBlueprint() {
                C ${rightHip} 82, ${rightWaist} 74, ${rightWaist} 62
                C ${rightWaist} 46, ${rightShoulder + 4} 32, ${rightShoulder} 22
                Z"
-            fill="rgba(46,197,240,0.12)" stroke="#2EC5F0" stroke-width="1.6" />
-      <!-- Грудные мышцы -->
+            fill="${pal.fill}" stroke="${pal.accent}" stroke-width="1.7" />
       <path d="M ${leftShoulder + 3} 28 Q 40 38 47 34 M ${rightShoulder - 3} 28 Q 56 38 49 34"
-            fill="none" stroke="rgba(46,197,240,0.65)" stroke-width="1.3" />
-      <!-- Сетка пресса (проявляется на низком % жира) -->
-      <g opacity="${absOpacity}" stroke="#00F59B" stroke-width="1.2" fill="none">
+            fill="none" stroke="${pal.bright}" stroke-width="1.3" opacity="0.75" />
+      <g opacity="${absOpacity}" stroke="${pal.bright}" stroke-width="1.2" fill="none">
         <rect x="41" y="40" width="6" height="7" rx="1.5"/>
         <rect x="49" y="40" width="6" height="7" rx="1.5"/>
         <rect x="41" y="49" width="6" height="7" rx="1.5"/>
@@ -370,9 +400,8 @@ function renderBodyFatBlueprint() {
         <rect x="41" y="58" width="6" height="7" rx="1.5"/>
         <rect x="49" y="58" width="6" height="7" rx="1.5"/>
       </g>
-      <!-- Маркеры замера талии -->
-      <circle cx="${leftWaist}" cy="62" r="2.2" fill="#2EC5F0"/>
-      <circle cx="${rightWaist}" cy="62" r="2.2" fill="#2EC5F0"/>
+      <circle cx="${leftWaist}" cy="62" r="2.4" fill="${pal.accent}"/>
+      <circle cx="${rightWaist}" cy="62" r="2.4" fill="${pal.accent}"/>
     </svg>
   `;
 }
@@ -642,13 +671,14 @@ function initStopwatchAndSrtChips() {
 function initMetabolicControls() {
   document.querySelectorAll("#genderSwitch .seg-opt").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll("#genderSwitch .seg-opt").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
       state.gender = btn.dataset.val;
+      applyGenderTheme();
       recalcMetabolic();
       recalcBodyweight();
       recalcStrength();
+      renderLogsView();
       saveUserState();
+      if (tg && tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
     });
   });
 
@@ -846,22 +876,23 @@ function drawRangeTrajectoryChart(startW, endW, weeksMin, weeksMax) {
     ...[...slowPts].reverse().map((p) => `${p.x},${p.y}`)
   ].join(" ");
 
+  const pal = getThemePalette();
   let labels = "";
   slowPts.forEach((p, idx) => {
     if (idx === 0 || idx === 2 || idx === steps) {
       labels += `
-        <circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#2EC5F0" stroke="#090A0D" stroke-width="1.5" />
+        <circle cx="${p.x}" cy="${p.y}" r="3.8" fill="${pal.accent}" stroke="#090A0D" stroke-width="1.5" />
         <text x="${p.x}" y="${p.y - 8}" fill="#F4F6F9" font-family="JetBrains Mono" font-size="9.5" text-anchor="middle">${p.val} кг</text>
-        <text x="${p.x}" y="${h - 2}" fill="#586070" font-family="JetBrains Mono" font-size="8.5" text-anchor="middle">Нед ${p.wk}</text>
+        <text x="${p.x}" y="${h - 2}" fill="#8A7E86" font-family="JetBrains Mono" font-size="8.5" text-anchor="middle">Нед ${p.wk}</text>
       `;
     }
   });
 
   container.innerHTML = `
     <svg viewBox="0 0 ${w} ${h}" width="100%" height="100%">
-      <polygon points="${corridorPolygon}" fill="rgba(46, 197, 240, 0.16)" />
-      <polyline fill="none" stroke="#00F59B" stroke-width="1.6" stroke-dasharray="4,3" points="${fastLine}" />
-      <polyline fill="none" stroke="#2EC5F0" stroke-width="2.2" points="${slowLine}" />
+      <polygon points="${corridorPolygon}" fill="${pal.fill}" />
+      <polyline fill="none" stroke="${pal.bright}" stroke-width="1.6" stroke-dasharray="4,3" points="${fastLine}" />
+      <polyline fill="none" stroke="${pal.accent}" stroke-width="2.4" points="${slowLine}" />
       ${labels}
     </svg>
   `;
@@ -1122,14 +1153,15 @@ function renderProgressionAndRadar(meta) {
     };
   });
 
+  const pal = getThemePalette();
   const userPoly = userPts.map((p) => `${p.x},${p.y}`).join(" ");
-  const userDots = userPts.map((p) => `<circle cx="${p.x}" cy="${p.y}" r="3.2" fill="#2EC5F0" />`).join("");
+  const userDots = userPts.map((p) => `<circle cx="${p.x}" cy="${p.y}" r="3.5" fill="${pal.accent}" />`).join("");
 
   document.getElementById("athleticRadarBox").innerHTML = `
     <svg viewBox="0 0 230 205" width="230" height="205">
       ${ringPolys}
       ${axisLinesAndLabels}
-      <polygon points="${userPoly}" fill="rgba(46, 197, 240, 0.22)" stroke="#2EC5F0" stroke-width="2" />
+      <polygon points="${userPoly}" fill="${pal.fill}" stroke="${pal.accent}" stroke-width="2" />
       ${userDots}
     </svg>
   `;
@@ -1367,20 +1399,21 @@ function renderLogsView() {
     return { x, y, val: e.value, d: new Date(e.date).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" }) };
   });
 
+  const pal = getThemePalette();
   const poly = pts.map((p) => `${p.x},${p.y}`).join(" ");
   const circles = pts
     .map(
       (p) => `
-      <circle cx="${p.x}" cy="${p.y}" r="3.5" fill="#2EC5F0" />
+      <circle cx="${p.x}" cy="${p.y}" r="3.8" fill="${pal.accent}" />
       <text x="${p.x}" y="${p.y - 7}" fill="#F4F6F9" font-family="JetBrains Mono" font-size="9.5" text-anchor="middle">${p.val}</text>
-      <text x="${p.x}" y="${h - 2}" fill="#586070" font-family="JetBrains Mono" font-size="8.5" text-anchor="middle">${p.d}</text>
+      <text x="${p.x}" y="${h - 2}" fill="#8A7E86" font-family="JetBrains Mono" font-size="8.5" text-anchor="middle">${p.d}</text>
     `
     )
     .join("");
 
   chartBox.innerHTML = `
     <svg viewBox="0 0 ${w} ${h}" width="100%" height="100%">
-      ${pts.length > 1 ? `<polyline fill="none" stroke="#2EC5F0" stroke-width="2" points="${poly}" />` : ""}
+      ${pts.length > 1 ? `<polyline fill="none" stroke="${pal.accent}" stroke-width="2.2" points="${poly}" />` : ""}
       ${circles}
     </svg>
   `;
@@ -1482,78 +1515,58 @@ function generateShareCanvasCard() {
   const ctx = canvas.getContext("2d");
   const meta = BW_EXERCISE_META[state.bwExercise];
   const res = state.lastBwEval;
+  const pal = getThemePalette();
 
-  // Глубокий фон #0B0B0D
-  ctx.fillStyle = "#0B0B0D";
+  ctx.fillStyle = pal.bgHeader;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Тонкая инженерная сетка на фоне
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.035)";
-  ctx.lineWidth = 1;
-  for (let x = 60; x < canvas.width; x += 60) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-  }
-  for (let y = 60; y < canvas.height; y += 60) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-  }
-
-  // Тонкая акцентная рамка #2EC5F0
-  ctx.strokeStyle = "rgba(46, 197, 240, 0.45)";
+  ctx.strokeStyle = pal.accent;
   ctx.lineWidth = 4;
   ctx.strokeRect(48, 48, canvas.width - 96, canvas.height - 96);
 
-  // Верхний тег
-  ctx.fillStyle = "#2EC5F0";
-  ctx.font = "700 30px 'JetBrains Mono', monospace";
+  ctx.fillStyle = pal.bright;
+  ctx.font = "700 30px 'Unbounded', sans-serif";
   ctx.fillText("КАЛИСТЕНИКА И БИОМЕТРИЯ ТЕЛА", 96, 145);
 
-  // Название упражнения
-  ctx.fillStyle = "#F3F5F8";
-  ctx.font = "700 62px 'Inter', sans-serif";
+  ctx.fillStyle = "#F7F5F6";
+  ctx.font = "700 60px 'Unbounded', sans-serif";
   ctx.fillText(meta.title, 96, 255);
 
-  // Огромный результат
-  ctx.fillStyle = "#2EC5F0";
-  ctx.font = "700 185px 'JetBrains Mono', monospace";
+  ctx.fillStyle = pal.accent;
+  ctx.font = "800 175px 'Unbounded', sans-serif";
   ctx.fillText(`${state.bwValue} ${meta.unit}`, 96, 485);
 
-  // Строка по ТЗ: «Отжимания: 25 · уровень Любитель · до Атлета +7»
   const summaryLine = `Уровень: ${res.levelName}${
     res.nextTierName ? `  ·  до ${res.nextTierName}: +${res.deltaToNext} ${meta.unit}` : ""
   }`;
-  ctx.fillStyle = "#F3F5F8";
-  ctx.font = "600 42px 'Inter', sans-serif";
+  ctx.fillStyle = "#F7F5F6";
+  ctx.font = "600 40px 'Manrope', sans-serif";
   ctx.fillText(summaryLine, 96, 605);
 
   if (res.equivalentKgText) {
-    ctx.fillStyle = "#9299A8";
-    ctx.font = "500 30px 'Inter', sans-serif";
+    ctx.fillStyle = "#A89FA5";
+    ctx.font = "500 30px 'Manrope', sans-serif";
     ctx.fillText(res.equivalentKgText.slice(0, 62), 96, 685);
   }
 
-  // Шкала прогресса
-  ctx.fillStyle = "#1D212A";
+  ctx.fillStyle = pal.track;
   ctx.fillRect(96, 790, canvas.width - 192, 24);
-  ctx.fillStyle = "#2EC5F0";
+  ctx.fillStyle = pal.accent;
   ctx.fillRect(96, 790, ((canvas.width - 192) * res.progressPct) / 100, 24);
 
-  // Блок телеметрии тела внизу карточки
-  ctx.fillStyle = "#14171F";
+  ctx.fillStyle = pal.track;
   ctx.fillRect(96, 880, canvas.width - 192, 160);
-  ctx.strokeStyle = "rgba(255,255,255,0.1)";
-  ctx.strokeRect(96, 880, canvas.width - 192, 160);
 
-  ctx.fillStyle = "#9299A8";
+  ctx.fillStyle = "#D4C8D0";
   ctx.font = "600 24px 'JetBrains Mono', monospace";
   ctx.fillText(`ВЕС ТЕЛА: ${state.weight} КГ   ·   СУХАЯ МАССА: ${(state.weight * (1 - state.bf / 100)).toFixed(1)} КГ`, 130, 972);
 
-  // Подвал с названием канала
-  ctx.fillStyle = "#2EC5F0";
-  ctx.font = "700 44px 'JetBrains Mono', monospace";
+  ctx.fillStyle = pal.accent;
+  ctx.font = "700 44px 'Unbounded', sans-serif";
   ctx.fillText("ИНЖЕНЕР РЕЛЬЕФА", 96, 1170);
 
-  ctx.fillStyle = "#9299A8";
-  ctx.font = "400 28px 'Inter', sans-serif";
+  ctx.fillStyle = "#A89FA5";
+  ctx.font = "500 28px 'Manrope', sans-serif";
   ctx.fillText("Доказательная калистеника и цифровая раскладка тела в Telegram", 96, 1225);
 }
 

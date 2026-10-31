@@ -9,10 +9,10 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=16" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Manrope:wght@500;600;700;800&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=17" />
 </head>
-<body>
+<body data-gender="male">
   <div class="ambient-glow"></div>
   <div class="device-shell">
     <!-- Top Telemetry Bar -->
@@ -54,10 +54,13 @@
       <!-- Step 1: Input Parameters Hardware Card -->
       <section class="panel">
         <div class="panel-header">
-          <span class="panel-title">01. ПАРАМЕТРЫ И ЦЕЛЬ</span>
+          <span class="panel-title">ПРОФИЛЬ И АНТРОПОМЕТРИЯ</span>
+        </div>
+
+        <div class="persona-switcher-wrap">
           <div class="seg-mini" id="genderSwitch">
-            <button type="button" class="seg-opt active" data-val="male">МУЖ</button>
-            <button type="button" class="seg-opt" data-val="female">ЖЕН</button>
+            <button type="button" class="seg-opt active" data-val="male">Мужской профиль</button>
+            <button type="button" class="seg-opt" data-val="female">Женский профиль</button>
           </div>
         </div>
 
@@ -1011,7 +1014,7 @@
     </nav>
   </div>
 
-  <script src="formulas.js?v=16"></script>
-  <script src="app.js?v=16"></script>
+  <script src="formulas.js?v=17"></script>
+  <script src="app.js?v=17"></script>
 </body>
 </html>
