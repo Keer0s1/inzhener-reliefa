@@ -1630,13 +1630,7 @@ function syncGateUI() {
     if (dot) dot.classList.add("unlocked");
     if (userBadge) {
       userBadge.classList.add("unlocked");
-      if (state.isAdmin) {
-        userBadge.style.cursor = "pointer";
-        userBadge.title = "Нажми, чтобы посмотреть глазами обычного пользователя (с замками)";
-        userBadge.textContent = "АДМИН · ОТКРЫТО ⇄";
-      } else {
-        userBadge.textContent = "ДОСТУП ОТКРЫТ";
-      }
+      userBadge.textContent = "ДОСТУП ОТКРЫТ";
     }
     bodies.forEach((b) => b && b.classList.remove("locked"));
     modals.forEach((m) => m && m.classList.add("hidden"));
@@ -1644,13 +1638,7 @@ function syncGateUI() {
     if (dot) dot.classList.remove("unlocked");
     if (userBadge) {
       userBadge.classList.remove("unlocked");
-      if (state.isAdmin) {
-        userBadge.style.cursor = "pointer";
-        userBadge.title = "Нажми, чтобы вернуться в режим Админа (без замков)";
-        userBadge.textContent = "ТЕСТ ЮЗЕРА · ЗАКРЫТО ⇄";
-      } else {
-        userBadge.textContent = "ДОСТУП ЗАКРЫТ";
-      }
+      userBadge.textContent = "ДОСТУП ЗАКРЫТ";
     }
     bodies.forEach((b) => b && b.classList.add("locked"));
     modals.forEach((m) => m && m.classList.remove("hidden"));
