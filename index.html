@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self';" />
+  <meta name="referrer" content="no-referrer" />
+  <title>ИНЖЕНЕР РЕЛЬЕФА — Цифровая биометрия и калистеника</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=15" />
+</head>
+<body>
+  <div class="ambient-glow"></div>
+  <div class="device-shell">
+    <!-- Top Telemetry Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="brand-emblem">
+          <span class="pulse-indicator" id="statusDot"></span>
+        </div>
+        <div>
+          <span class="topbar-brand" id="headerChannelName">ИНЖЕНЕР РЕЛЬЕФА</span>
+          <div class="topbar-sub">Цифровая раскладка по телу за 30 секунд</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <button type="button" class="icon-btn" id="openPrivacyBtn" title="Приватность и данные">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+        </button>
+        <div class="status-badge mono" id="userAccessBadge">ДОСТУП ЗАКРЫТ</div>
+      </div>
+    </header>
+
+    <!-- Honest Positioning Banner -->
+    <div class="positioning-note">
+      <span class="pos-tag mono">ИНФО</span>
+      <span>Цифровая раскладка по твоему телу за 30 секунд. С ней проще разговаривать с тренером или врачом.</span>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- VIEW 1: БИОМЕТРИЯ (METABOLIC & BODY COMPOSITION)                   -->
+    <!-- ================================================================== -->
+    <main class="view active" id="view-metabolic">
+      <div class="section-header">
+        <div class="eyebrow">01 · БИОМЕТРИЯ И СОСТАВ ТЕЛА</div>
+        <h1 class="screen-title">Биометрия и ориентир по срокам формы</h1>
+      </div>
+
+      <!-- Step 1: Input Parameters Hardware Card -->
+      <section class="panel">
+        <div class="panel-header">
+          <span class="panel-title">01. ПАРАМЕТРЫ И ЦЕЛЬ</span>
+          <div class="seg-mini" id="genderSwitch">
+            <button type="button" class="seg-opt active" data-val="male">МУЖ</button>
+            <button type="button" class="seg-opt" data-val="female">ЖЕН</button>
+          </div>
+        </div>
+
+        <div class="protocol-bar" id="goalSwitch">
+          <button type="button" class="proto-btn active" data-val="cut">
+            <span class="proto-code">РЕЖИМ 01</span>
+            <span class="proto-name">Снижение / Рельеф</span>
+          </button>
+          <button type="button" class="proto-btn" data-val="recomp">
+            <span class="proto-code">РЕЖИМ 02</span>
+            <span class="proto-name">Рекомпозиция</span>
+          </button>
+          <button type="button" class="proto-btn" data-val="bulk">
+            <span class="proto-code">РЕЖИМ 03</span>
+            <span class="proto-name">Набор массы</span>
+          </button>
+        </div>
+
+        <div class="control-list">
+          <div class="control-row">
+            <div class="ctrl-meta">
+              <span class="ctrl-label">Текущий вес тела</span>
+              <span class="ctrl-readout mono"><span id="valWeight">82.0</span> <small>кг</small></span>
+            </div>
+            <div class="ctrl-bar">
+              <button type="button" class="step-btn" data-target="inWeight" data-step="-0.5">−</button>
+              <input type="range" id="inWeight" min="40" max="150" step="0.5" value="82" class="track-slider" />
+              <button type="button" class="step-btn" data-target="inWeight" data-step="0.5">+</button>
+            </div>
+          </div>
+
+          <div class="control-row">
+            <div class="ctrl-meta">
+              <span class="ctrl-label">Желаемый вес</span>
+              <span class="ctrl-readout mono accent-cyan"><span id="valTargetWeight">75.0</span> <small>кг</small></span>
+            </div>
+            <div class="ctrl-bar">
+              <button type="button" class="step-btn" data-target="inTargetWeight" data-step="-0.5">−</button>
+              <input type="range" id="inTargetWeight" min="40" max="140" step="0.5" value="75" class="track-slider" />
+              <button type="button" class="step-btn" data-target="inTargetWeight" data-step="0.5">+</button>
+            </div>
+          </div>
+
+          <div class="control-row-split">
+            <div class="split-box">
+              <span class="ctrl-label">Рост (см)</span>
+              <div class="stepper-compact">
+                <button type="button" class="step-btn" data-target="inHeight" data-step="-1">−</button>
+                <input type="number" id="inHeight" value="178" min="140" max="220" class="mono-input mono" readonly />
+                <button type="button" class="step-btn" data-target="inHeight" data-step="1">+</button>
+              </div>
+            </div>
+            <div class="split-box">
+              <span class="ctrl-label">Возраст</span>
+              <div class="stepper-compact">
+                <button type="button" class="step-btn" data-target="inAge" data-step="-1">−</button>
+                <input type="number" id="inAge" value="25" min="14" max="75" class="mono-input mono" readonly />
+                <button type="button" class="step-btn" data-target="inAge" data-step="1">+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="control-row">
+            <div class="ctrl-meta">
+              <span class="ctrl-label">Обхват талии на уровне пупка (см)</span>
+              <span class="ctrl-readout mono"><span id="valWaist">82</span> <small>см</small></span>
+            </div>
+            <div class="ctrl-bar">
+              <button type="button" class="step-btn" data-target="inWaist" data-step="-1">−</button>
+              <input type="range" id="inWaist" min="55" max="140" step="1" value="82" class="track-slider" />
+              <button type="button" class="step-btn" data-target="inWaist" data-step="1">+</button>
+            </div>
+          </div>
+
+          <!-- Interactive Blueprint Body Fat Selector -->
+          <div class="control-row" style="margin-top: 6px;">
+            <div class="ctrl-meta">
+              <span class="ctrl-label">Визуальная оценка процента жира</span>
+              <span class="ctrl-readout mono accent-cyan"><span id="valBf">15</span><small>%</small></span>
+            </div>
+            <p class="field-hint">Если не знаешь точно — выбери по инженерному силуэту ниже (без калипера или DEXA это ориентировочная оценка):</p>
+
+            <!-- Live SVG Body Blueprint Preview -->
+            <div class="blueprint-box">
+              <div class="bp-svg-wrap" id="bfSilhouetteSvg">
+                <!-- Dynamic SVG Torso rendered by JS -->
+              </div>
+              <div class="bp-telemetry">
+                <div class="bp-row">
+                  <span class="bp-lbl">ТЕКУЩИЙ ИМТ</span>
+                  <span class="bp-val mono" id="bpLiveBmi">25.9 кг/м²</span>
+                </div>
+                <div class="bp-row">
+                  <span class="bp-lbl">ЖИРОВАЯ ТКАНЬ</span>
+                  <span class="bp-val mono" id="bpLiveFatKg">~12.3 кг</span>
+                </div>
+                <div class="bp-row">
+                  <span class="bp-lbl">ВИЗУАЛЬНЫЙ МАРКЕР</span>
+                  <span class="bp-val" id="bpLiveVisualDesc" style="font-size:11px;color:var(--sig-cyan);">Видны верхние кубики, чёткий контур плеч</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="bf-scale" id="bfSelector">
+              <button type="button" class="bf-node" data-bf="10">
+                <span class="mono">~10%</span>
+                <small>Сухой</small>
+              </button>
+              <button type="button" class="bf-node active" data-bf="15">
+                <span class="mono">~15%</span>
+                <small>Атлет</small>
+              </button>
+              <button type="button" class="bf-node" data-bf="20">
+                <span class="mono">~20%</span>
+                <small>Норма</small>
+              </button>
+              <button type="button" class="bf-node" data-bf="26">
+                <span class="mono">~26%</span>
+                <small>Мягкий</small>
+              </button>
+              <button type="button" class="bf-node" data-bf="32">
+                <span class="mono">32%+</span>
+                <small>Избыток</small>
+              </button>
+            </div>
+          </div>
+
+          <!-- Activity Multiplier -->
+          <div class="control-row">
+            <div class="ctrl-meta">
+              <span class="ctrl-label">Коэффициент суточной активности</span>
+              <span class="ctrl-readout mono" id="valActivityTag">x1.38</span>
+            </div>
+            <div class="activity-chips" id="activitySelector">
+              <button type="button" class="chip" data-act="1.2">Сидячая работа / мало шагов</button>
+              <button type="button" class="chip active" data-act="1.375">2–3 трен. / ~8к шагов</button>
+              <button type="button" class="chip" data-act="1.55">4–5 трен. / активный день</button>
+              <button type="button" class="chip" data-act="1.725">Тяжёлый физ. режим</button>
+            </div>
+          </div>
+
+          <button type="button" class="btn-primary glow-btn" id="scrollToMetabolicResultBtn" style="margin-top: 6px;">
+            <span>Показать расчёт биометрии и прогноз</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <polyline points="19 12 12 19 5 12"></polyline>
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- Health Guardrail Warnings Box -->
+      <div id="metabolicWarningsBox" class="guardrail-box hidden"></div>
+
+      <!-- DETAILED REPORT & PROJECTION GRAPH (ALL RESULTS GATED BEHIND SUBSCRIPTION!) -->
+      <section class="gated-wrapper" id="gateMetabolic">
+        <div class="gated-body locked" id="bodyMetabolic">
+          <!-- Primary Dial & Rings Summary (GATED!) -->
+          <div class="telemetry-panel">
+            <div class="rings-row">
+              <div class="gauge-box">
+                <svg viewBox="0 0 120 120" class="ring-svg">
+                  <circle class="ring-track" cx="60" cy="60" r="50" />
+                  <circle class="ring-progress" id="kcalRing" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="75" />
+                </svg>
+                <div class="gauge-center">
+                  <span class="gauge-unit">ОРИЕНТИР ККАЛ</span>
+                  <span class="gauge-value mono" id="liveKcalPreview">2140</span>
+                  <span class="gauge-sub mono" id="liveDeficitTag">-20% ДЕФИЦИТ</span>
+                </div>
+              </div>
+
+              <div class="readouts-col">
+                <div class="readout-item">
+                  <span class="ro-label">СУХАЯ МАССА ТЕЛА</span>
+                  <div class="ro-val-wrap">
+                    <span class="ro-val mono" id="liveLbmPreview">69.7</span>
+                    <span class="ro-unit">КГ</span>
+                  </div>
+                </div>
+                <div class="readout-item">
+                  <span class="ro-label">БАЗОВЫЙ ОБМЕН</span>
+                  <div class="ro-val-wrap">
+                    <span class="ro-val mono" id="liveBmrPreview">1840</span>
+                    <span class="ro-unit">ККАЛ</span>
+                  </div>
+                </div>
+                <div class="readout-item">
+                  <span class="ro-label">РАСХОД ЗА ДЕНЬ</span>
+                  <div class="ro-val-wrap">
+                    <span class="ro-val mono" id="liveTdeePreview">2530</span>
+                    <span class="ro-unit">ККАЛ</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Blocked by BMI < 18.5 message -->
+          <div id="bmiBlockedPanel" class="panel guardrail-stop hidden">
+            <div class="panel-title">ПЛАН ОСТАНОВЛЕН ПРЕДОХРАНИТЕЛЕМ ЗДОРОВЬЯ</div>
+            <p style="margin-top:8px; color: var(--text-primary);">
+              Такая цель ниже здорового диапазона ИМТ (&lt;18,5 кг/м²). Приложение не строит дефицитные планы для достижения дефицита массы тела. Лучше обсудить эту цель со специалистом или врачом.
+            </p>
+          </div>
+
+          <!-- Normal Metabolic Plan Content -->
+          <div id="metabolicNormalContent">
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">ПРОГНОЗ ТРАЕКТОРИИ ВЕСА (ОРИЕНТИР)</span>
+                <span class="mono tag-pill" id="projDateBadge">ИЮЛ — АВГ 2026</span>
+              </div>
+              <div class="chart-meta-row">
+                <div>
+                  <div class="cm-label">ОРИЕНТИР СРОКА</div>
+                  <div class="cm-val mono" id="projWeeksVal">9–14 НЕД</div>
+                </div>
+                <div>
+                  <div class="cm-label">БЕЗОПАСНЫЙ ТЕМП</div>
+                  <div class="cm-val mono" id="projRateVal">0.4–0.8 КГ/НЕД</div>
+                </div>
+                <div>
+                  <div class="cm-label">ОРИЕНТИР ВОДЫ</div>
+                  <div class="cm-val mono" id="projWaterVal">2.7 Л/ДЕНЬ</div>
+                </div>
+              </div>
+
+              <p class="field-hint" id="projRateExplanation"></p>
+
+              <!-- Dynamic SVG Line Chart (Range Corridor) -->
+              <div class="svg-chart-container" id="weightChartBox"></div>
+
+              <div class="honest-chart-caption">
+                Вес меняется не по прямой. В первые 1–2 недели часто уходит вода, потом темп замедляется — это нормально. Прогноз пересчитывается, когда ты вносишь новый вес.
+              </div>
+
+              <!-- Quick Weekly Fact Check-in -->
+              <div class="fact-recalc-bar">
+                <div class="fact-recalc-top">
+                  <span class="panel-title">ПЕРЕСЧЁТ ПРОГНОЗА ПО ФАКТУ</span>
+                  <span class="mono sub-code" id="factLogsCount">Замеров: 0</span>
+                </div>
+                <div class="fact-input-row">
+                  <input type="number" id="inFactWeight" step="0.1" placeholder="Вес сегодня (кг)" class="fact-input mono" />
+                  <button type="button" class="btn-secondary-sm" id="saveFactWeightBtn">Внести вес</button>
+                </div>
+                <div class="field-hint" id="factTrendStatus">
+                  Вноси вес раз в неделю — приложение возьмёт среднюю скорость и скорректирует диапазон дат.
+                </div>
+              </div>
+            </div>
+
+            <!-- Macronutrient Split Architecture -->
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">ОРИЕНТИР БЖУ (ПО ДАННЫМ ISSN)</span>
+                <span class="mono sub-code" id="macroRatioCode">Б:31% / Ж:28% / У:41%</span>
+              </div>
+
+              <div class="macro-stackBar">
+                <div class="ms-seg seg-p" id="barP" style="width: 31%"></div>
+                <div class="ms-seg seg-f" id="barF" style="width: 28%"></div>
+                <div class="ms-seg seg-c" id="barC" style="width: 41%"></div>
+              </div>
+
+              <div class="macro-cards-grid">
+                <div class="macro-cell">
+                  <div class="mc-top">
+                    <span class="mc-dot dot-p"></span>
+                    <span class="mc-name">БЕЛКИ</span>
+                  </div>
+                  <div class="mc-grams mono" id="outProtein">164 г</div>
+                  <div class="mc-sub mono" id="outProteinPerKg">2.0 г/кг</div>
+                </div>
+                <div class="macro-cell">
+                  <div class="mc-top">
+                    <span class="mc-dot dot-f"></span>
+                    <span class="mc-name">ЖИРЫ</span>
+                  </div>
+                  <div class="mc-grams mono" id="outFats">70 г</div>
+                  <div class="mc-sub mono" id="outFatsPerKg">0.85 г/кг</div>
+                </div>
+                <div class="macro-cell">
+                  <div class="mc-top">
+                    <span class="mc-dot dot-c"></span>
+                    <span class="mc-name">УГЛЕВОДЫ</span>
+                  </div>
+                  <div class="mc-grams mono" id="outCarbs">210 г</div>
+                  <div class="mc-sub mono" id="outCarbsKcal">840 ккал</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Waist-to-Height Ratio (WHtR) Engineering Proportions Card -->
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">ИНДЕКС ТАЛИЯ / РОСТ (ASHWELL ET AL., 2012)</span>
+                <span class="mono tag-pill" id="outWhtrBadge">КОЭФ: 0.46</span>
+              </div>
+              <p class="field-hint" id="outWhtrStatus">В пределах здоровой нормы (&lt;0,50 от роста)</p>
+              <div class="anthro-grid">
+                <div class="anthro-cell">
+                  <span class="ac-label">ОРИЕНТИР РЕЛЬЕФНОЙ ТАЛИИ</span>
+                  <span class="ac-val mono" id="outAthleticWaist">79.2 см</span>
+                </div>
+                <div class="anthro-cell">
+                  <span class="ac-label">ВЕРХНЯЯ ГРАНИЦА ЗДОРОВЬЯ</span>
+                  <span class="ac-val mono" id="outHealthyWaist">88.1 см</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="medical-footer">
+            Не является медицинской рекомендацией. При болях, хронических заболеваниях и до 18 лет — консультация врача.
+          </div>
+        </div>
+
+        <!-- Minimalist Hardware Lock Overlay -->
+        <div class="gate-modal" id="overlayMetabolic">
+          <div class="gate-box">
+            <div class="gate-header">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span>ДОСТУП ДЛЯ ПОДПИСЧИКОВ КАНАЛА</span>
+            </div>
+            <div class="gate-title">Разблокировать свой расчёт калорий, LBM, БЖУ и график</div>
+            <p class="gate-desc">Твой профиль рассчитан. Подай заявку в закрытый Telegram-канал «Инженер Рельефа» — доступ откроется мгновенно после нажатия (ожидать подтверждения админа не нужно).</p>
+            <div class="gate-actions">
+              <button type="button" class="btn-primary glow-btn js-join-channel">
+                <span>1. Подать заявку в закрытый канал</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <line x1="7" y1="17" x2="17" y2="7"></line>
+                  <polyline points="7 7 17 7 17 17"></polyline>
+                </svg>
+              </button>
+              <button type="button" class="btn-ghost js-verify-access">
+                2. Я подал заявку — Открыть расчёт
+              </button>
+            </div>
+            <div class="gate-toast hidden" id="gateError1">
+              Заявка ещё не зафиксирована. Сначала нажми голубую кнопку «1. Подать заявку в закрытый канал» выше.
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ================================================================== -->
+    <!-- VIEW 2: СИЛА (СВОЙ ВЕС / КАЛИСТЕНИКА + ШТАНГА & 1ПМ)               -->
+    <!-- ================================================================== -->
+    <main class="view" id="view-strength">
+      <div class="section-header">
+        <div class="eyebrow">02 · СИЛА И КАЛИСТЕНИКА</div>
+        <h1 class="screen-title">Силовые тесты: Свой вес и Штанга</h1>
+      </div>
+
+      <!-- Mode Switcher -->
+      <div class="mode-switcher" id="strengthModeSwitch">
+        <button type="button" class="mode-btn active" data-mode="bw">Свой вес (Турник / Пол)</button>
+        <button type="button" class="mode-btn" data-mode="barbell">Штанга & +Вес (1ПМ)</button>
+      </div>
+
+      <!-- SUB-MODE A: СВОЙ ВЕС (BODYWEIGHT EXERCISES) -->
+      <div id="strengthSubBw">
+        <section class="panel">
+          <div class="panel-header">
+            <span class="panel-title">ВЫБЕРИ ТЕСТ СО СВОИМ ВЕСОМ</span>
+          </div>
+          <div class="lift-tabs" id="bwExerciseSelector">
+            <button type="button" class="lift-tab active" data-ex="pushups">Отжимания</button>
+            <button type="button" class="lift-tab" data-ex="pullups">Подтягивания</button>
+            <button type="button" class="lift-tab" data-ex="dips">Брусья</button>
+            <button type="button" class="lift-tab" data-ex="squats60">Приседания 60с</button>
+            <button type="button" class="lift-tab" data-ex="hang">Вис на турнике</button>
+            <button type="button" class="lift-tab" data-ex="wallsit">Стульчик у стены</button>
+            <button type="button" class="lift-tab" data-ex="plank">Планка</button>
+            <button type="button" class="lift-tab" data-ex="srt">Тест «Сесть-встать» (SRT)</button>
+          </div>
+
+          <div class="control-list" style="margin-top: 14px;">
+            <div class="control-row">
+              <div class="ctrl-meta">
+                <span class="ctrl-label" id="bwInputLabel">Максимум повторений за подход</span>
+                <span class="ctrl-readout mono"><span id="valBwInput">25</span> <small id="valBwUnit">повт</small></span>
+              </div>
+              <div class="ctrl-bar">
+                <button type="button" class="step-btn" data-target="inBwValue" data-step="-1">−</button>
+                <input type="range" id="inBwValue" min="0" max="100" step="1" value="25" class="track-slider" />
+                <button type="button" class="step-btn" data-target="inBwValue" data-step="1">+</button>
+              </div>
+            </div>
+
+            <!-- Checkbox only for pushups -->
+            <label class="check-row" id="pushupKneeRow">
+              <input type="checkbox" id="inPushupKnees" />
+              <span>Вариант с колен (нагрузка ≈49% массы тела вместо ≈64%, Ebben et al., 2011)</span>
+            </label>
+
+            <!-- Built-in Isometric Stopwatch (Shown automatically for Hang, Wallsit, Plank, Squats60!) -->
+            <div class="stopwatch-widget hidden" id="bwStopwatchWidget">
+              <div class="sw-left">
+                <span class="sw-label mono">ВСТРОЕННЫЙ СЕКУНДОМЕР ТЕСТА</span>
+                <div class="sw-time mono" id="swDisplay">00:00.0</div>
+              </div>
+              <div class="sw-actions">
+                <button type="button" class="sw-btn sw-start" id="swToggleBtn">СТАРТ</button>
+                <button type="button" class="sw-btn sw-apply" id="swApplyBtn" title="Подставить время в ползунок">В РАСЧЁТ</button>
+                <button type="button" class="sw-btn sw-reset" id="swResetBtn">↺</button>
+              </div>
+            </div>
+
+            <!-- Interactive SRT Calculator Chips (Shown only for SRT test!) -->
+            <div class="srt-interactive-box hidden" id="srtInstructionBox">
+              <div class="panel-title" style="color:var(--sig-cyan);margin-bottom:6px;">ИНТЕРАКТИВНЫЙ ПОДСЧЁТ БАЛЛОВ SRT (СТАРТ = 10.0)</div>
+              <p class="field-hint">Сядь на пол со скрещенными ногами и встань обратно. Отмечай ниже, если пришлось коснуться пола или опереться (баллы вычтутся сами):</p>
+              <div class="srt-chips-grid" id="srtPenaltyChips">
+                <button type="button" class="srt-chip" data-penalty="1">Опора рукой при посадке (−1)</button>
+                <button type="button" class="srt-chip" data-penalty="1">Опора коленом при посадке (−1)</button>
+                <button type="button" class="srt-chip" data-penalty="0.5">Потеря баланса при посадке (−0.5)</button>
+                <button type="button" class="srt-chip" data-penalty="1">Опора рукой при подъёме (−1)</button>
+                <button type="button" class="srt-chip" data-penalty="1">Опора коленом при подъёме (−1)</button>
+                <button type="button" class="srt-chip" data-penalty="0.5">Потеря баланса при подъёме (−0.5)</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- BODYWEIGHT RESULTS (GATED) -->
+        <section class="gated-wrapper" id="gateStrengthBw">
+          <div class="gated-body locked" id="bodyStrengthBw">
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title" id="bwResultHeaderTitle">РЕЗУЛЬТАТ ТЕСТА</span>
+                <span class="mono tag-pill" id="bwOutLevelBadge">УРОВЕНЬ: ЛЮБИТЕЛЬ</span>
+              </div>
+
+              <div class="rm-hero-row">
+                <div>
+                  <div class="rm-big mono" id="bwOutMainVal">25 <small>ПОВТ</small></div>
+                  <div class="rm-sub" id="bwOutNextGoal">До уровня Атлет тебе +4 повт</div>
+                </div>
+                <button type="button" class="btn-secondary-sm" id="saveBwResultBtn">
+                  + В мои замеры
+                </button>
+              </div>
+
+              <!-- 4-Tier Visual Step Ladder -->
+              <div class="tier-ladder" id="bwTierLadder">
+                <div class="tl-step" data-tier="0">
+                  <span class="tl-name">НОВИЧОК</span>
+                  <span class="tl-val mono" id="tlVal0">Старт</span>
+                </div>
+                <div class="tl-step" data-tier="1">
+                  <span class="tl-name">ЛЮБИТЕЛЬ</span>
+                  <span class="tl-val mono" id="tlVal1">17+</span>
+                </div>
+                <div class="tl-step" data-tier="2">
+                  <span class="tl-name">АТЛЕТ</span>
+                  <span class="tl-val mono" id="tlVal2">29+</span>
+                </div>
+                <div class="tl-step" data-tier="3">
+                  <span class="tl-name">ЭЛИТА</span>
+                  <span class="tl-val mono" id="tlVal3">36+</span>
+                </div>
+              </div>
+
+              <!-- Progress Spectrum -->
+              <div class="spectrum-track">
+                <div class="spectrum-fill" id="bwOutSpectrumBar" style="width: 58%"></div>
+              </div>
+
+              <!-- Ebben et al. 2011 Kinetic Equivalent or SRT Clinical Note -->
+              <div class="kinetic-box" id="bwKineticBox"></div>
+
+              <!-- Source & Comparison with previous log -->
+              <div class="source-tag-note" id="bwSourceNote"></div>
+              <div class="compare-badge hidden" id="bwCompareBadge"></div>
+
+              <!-- Action Row: Share Result Card -->
+              <div class="share-actions-row">
+                <button type="button" class="btn-outline-accent" id="shareBwCardBtn">
+                  <span>Сгенерировать карточку результата для Stories</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 4-Week Progression Plan + Rest Timer -->
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title" id="progPlanTitle">ПЛАН ПРОГРЕССИИ НА 4 НЕДЕЛИ</span>
+                <span class="mono sub-code">Запас 2 повт (RIR 2)</span>
+              </div>
+              <div class="prog-weeks-list" id="progWeeksList"></div>
+
+              <!-- Built-in Rest Countdown Timer between sets -->
+              <div class="rest-timer-bar">
+                <div>
+                  <span class="bp-lbl">ТАЙМЕР ОТДЫХА МЕЖДУ ПОДХОДАМИ</span>
+                  <div class="mono" style="font-size:18px;font-weight:700;" id="restTimerDisplay">02:00</div>
+                </div>
+                <div class="sw-actions">
+                  <button type="button" class="sw-btn sw-apply" id="rest90Btn">90 с</button>
+                  <button type="button" class="sw-btn sw-start" id="rest120Btn">120 с</button>
+                  <button type="button" class="sw-btn sw-reset" id="restStopBtn">✕</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5-Axis Athletic Balance Radar Chart -->
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">РАДАР БАЛАНСА ТЕЛА (5 КАЧЕСТВ)</span>
+                <span class="mono sub-code">По твоим тестам</span>
+              </div>
+              <div class="radar-wrap" id="athleticRadarBox"></div>
+              <div class="honest-chart-caption" id="radarVerdictText">
+                Проходи тесты в разных упражнениях (Отжимания, Подтягивания, Вис, Планка, Приседания/SRT) — радар покажет сильные и отстающие звенья.
+              </div>
+            </div>
+
+            <div class="medical-footer">
+              Не является медицинской рекомендацией. При болях, хронических заболеваниях и до 18 лет — консультация врача.
+            </div>
+          </div>
+
+          <div class="gate-modal" id="overlayStrengthBw">
+            <div class="gate-box">
+              <div class="gate-header"><span>ДОСТУП ДЛЯ ПОДПИСЧИКОВ</span></div>
+              <div class="gate-title">Открыть свой уровень, эквивалент в кг и карточку результата</div>
+              <p class="gate-desc">Подай заявку в закрытый канал «Инженер Рельефа» — доступ откроется мгновенно.</p>
+              <div class="gate-actions">
+                <button type="button" class="btn-primary glow-btn js-join-channel">1. Подать заявку в канал</button>
+                <button type="button" class="btn-ghost js-verify-access">2. Я подал заявку — Открыть</button>
+              </div>
+              <div class="gate-error hidden">Сначала нажми кнопку 1 и подай заявку в закрытый канал</div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- SUB-MODE B: ШТАНГА & СТРИТЛИФТИНГ (+ВЕС) -->
+      <div id="strengthSubBarbell" class="hidden">
+        <section class="panel">
+          <div class="panel-header">
+            <span class="panel-title">ДВИЖЕНИЕ СО ШТАНГОЙ ИЛИ ДОП. ВЕСОМ</span>
+          </div>
+          <div class="lift-tabs" id="liftSelector">
+            <button type="button" class="lift-tab active" data-lift="bench">Жим лёжа</button>
+            <button type="button" class="lift-tab" data-lift="pullup">Подтягивания +вес</button>
+            <button type="button" class="lift-tab" data-lift="dips_w">Брусья +вес</button>
+            <button type="button" class="lift-tab" data-lift="squat">Присед</button>
+            <button type="button" class="lift-tab" data-lift="deadlift">Становая</button>
+            <button type="button" class="lift-tab" data-lift="ohp">Жим стоя</button>
+          </div>
+
+          <div class="control-list" style="margin-top: 14px;">
+            <div class="control-row">
+              <div class="ctrl-meta">
+                <span class="ctrl-label" id="barbellWeightLabel">Рабочий вес снаряда</span>
+                <span class="ctrl-readout mono"><span id="valLiftKg">80.0</span> <small>кг</small></span>
+              </div>
+              <div class="ctrl-bar">
+                <button type="button" class="step-btn" data-target="inLiftKg" data-step="-2.5">−</button>
+                <input type="range" id="inLiftKg" min="5" max="280" step="2.5" value="80" class="track-slider" />
+                <button type="button" class="step-btn" data-target="inLiftKg" data-step="2.5">+</button>
+              </div>
+            </div>
+
+            <div class="control-row">
+              <div class="ctrl-meta">
+                <span class="ctrl-label">Количество повторений в подходе</span>
+                <span class="ctrl-readout mono"><span id="valLiftReps">6</span> <small>повт</small></span>
+              </div>
+              <div class="ctrl-bar">
+                <button type="button" class="step-btn" data-target="inLiftReps" data-step="-1">−</button>
+                <input type="range" id="inLiftReps" min="1" max="20" step="1" value="6" class="track-slider" />
+                <button type="button" class="step-btn" data-target="inLiftReps" data-step="1">+</button>
+              </div>
+            </div>
+
+            <div class="control-row-split">
+              <div class="split-box">
+                <span class="ctrl-label">Запястье (см)</span>
+                <div class="stepper-compact">
+                  <button type="button" class="step-btn" data-target="inWrist" data-step="-0.5">−</button>
+                  <input type="number" id="inWrist" value="17.5" step="0.5" class="mono-input mono" readonly />
+                  <button type="button" class="step-btn" data-target="inWrist" data-step="0.5">+</button>
+                </div>
+              </div>
+              <div class="split-box">
+                <span class="ctrl-label">Лодыжка (см)</span>
+                <div class="stepper-compact">
+                  <button type="button" class="step-btn" data-target="inAnkle" data-step="-0.5">−</button>
+                  <input type="number" id="inAnkle" value="22.5" step="0.5" class="mono-input mono" readonly />
+                  <button type="button" class="step-btn" data-target="inAnkle" data-step="0.5">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- BARBELL RESULTS (GATED) -->
+        <section class="gated-wrapper" id="gateStrengthBarbell">
+          <div class="gated-body locked" id="bodyStrengthBarbell">
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">ОЦЕНКА 1ПМ (ЭПЛИ + БЖИЦКИ)</span>
+                <span class="mono tag-pill" id="outStrengthClass">УРОВЕНЬ: ЛЮБИТЕЛЬ</span>
+              </div>
+
+              <!-- High Reps Warning (>10 reps) -->
+              <div id="highRepsWarningBox" class="guardrail-box hidden" style="margin-bottom: 10px;"></div>
+
+              <div class="rm-hero-row">
+                <div>
+                  <div class="rm-big mono" id="out1RM">95.0 <small>КГ</small></div>
+                  <div class="rm-sub" id="out1RMSubDetail">Формула: среднее Эпли (1985) и Бжицки (1993)</div>
+                  <div class="rm-sub" id="outBwRatio">Отношение к весу: 1.16x</div>
+                </div>
+                <button type="button" class="btn-secondary-sm" id="saveBarbellResultBtn">
+                  + В мои замеры
+                </button>
+              </div>
+
+              <div class="spectrum-track">
+                <div class="spectrum-fill" id="outSpectrumBar" style="width: 60%"></div>
+              </div>
+              <div class="spectrum-labels mono">
+                <span>НОВИЧОК</span>
+                <span>ЛЮБИТЕЛЬ</span>
+                <span>АТЛЕТ</span>
+                <span>ЭЛИТА</span>
+              </div>
+
+              <div class="source-tag-note" id="outPercentileSourceNote" style="margin-top:10px;"></div>
+            </div>
+
+            <!-- Working Zones Table -->
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">РАБОЧИЕ ЗОНЫ ОТ 1ПМ</span>
+                <span class="mono sub-code">Эпли / Бжицки</span>
+              </div>
+              <div class="zones-table" id="zonesList"></div>
+            </div>
+
+            <!-- Casey Butt Potential Assessment -->
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">ОЦЕНКА ПОТЕНЦИАЛА (КЕЙСИ БАТТ)</span>
+                <span class="mono sub-code">Ориентир при ~10% жира</span>
+              </div>
+              <p class="field-hint">
+                Расчёт по формуле Кейси Батта на основе данных натуральных культуристов. Это ориентир, а не предел: у конкретного человека результат может отличаться.
+              </p>
+              <div class="anthro-grid">
+                <div class="anthro-cell">
+                  <span class="ac-label">ОРИЕНТИР СУХОГО ВЕСА</span>
+                  <span class="ac-val mono" id="outMaxWeight">89.0 кг</span>
+                </div>
+                <div class="anthro-cell">
+                  <span class="ac-label">ГРУДНАЯ КЛЕТКА</span>
+                  <span class="ac-val mono" id="outMaxChest">116.5 см</span>
+                </div>
+                <div class="anthro-cell">
+                  <span class="ac-label">БИЦЕПС</span>
+                  <span class="ac-val mono" id="outMaxBicep">43.4 см</span>
+                </div>
+                <div class="anthro-cell">
+                  <span class="ac-label">БЕДРО</span>
+                  <span class="ac-val mono" id="outMaxThigh">61.2 см</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="medical-footer">
+              Не является медицинской рекомендацией. При болях, хронических заболеваниях и до 18 лет — консультация врача.
+            </div>
+          </div>
+
+          <div class="gate-modal" id="overlayStrengthBarbell">
+            <div class="gate-box">
+              <div class="gate-header"><span>ДОСТУП ДЛЯ ПОДПИСЧИКОВ</span></div>
+              <div class="gate-title">Открыть расчёт 1ПМ, рабочие зоны и оценку потенциала</div>
+              <p class="gate-desc">Подай заявку в закрытый канал — доступ откроется мгновенно.</p>
+              <div class="gate-actions">
+                <button type="button" class="btn-primary glow-btn js-join-channel">1. Подать заявку в канал</button>
+                <button type="button" class="btn-ghost js-verify-access">2. Я подал заявку — Открыть</button>
+              </div>
+              <div class="gate-error hidden">Сначала нажми кнопку 1 и подай заявку в закрытый канал</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- ================================================================== -->
+    <!-- VIEW 3: ПРОТОКОЛ (РАЦИОН & ДОКАЗАТЕЛЬНЫЕ ДОБАВКИ + ФИЛЬТРЫ)        -->
+    <!-- ================================================================== -->
+    <main class="view" id="view-nutrition">
+      <div class="section-header">
+        <div class="eyebrow">03 · СУТОЧНЫЙ РАЦИОН И ДОБАВКИ</div>
+        <h1 class="screen-title">Ориентир рациона и добавки</h1>
+      </div>
+
+      <section class="gated-wrapper" id="gateNutrition">
+        <div class="gated-body locked" id="bodyNutrition">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">СУТОЧНАЯ МАТРИЦА ПРОДУКТОВ</span>
+              <button type="button" class="action-link mono" id="cycleMatrixBtn">СМЕНИТЬ НАБОР ↻</button>
+            </div>
+            <p class="panel-note">Пример набора обычных продуктов в сухом/сыром виде под твой расчёт (<span class="mono" id="matrixKcalSpan">2140</span> ккал):</p>
+            <div class="ration-table" id="rationTable"></div>
+          </div>
+
+          <!-- Contraindications Questionnaire before Caffeine Dosage (P1.3) -->
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">АНКЕТА ПЕРЕД РАСЧЁТОМ КОФЕИНА</span>
+            </div>
+            <p class="field-hint">Отметь, если относится к тебе (при любом пункте расчёт стимулирующей дозировки отключается):</p>
+            <div class="contra-checklist" id="caffeineContraList">
+              <label class="check-row"><input type="checkbox" class="contra-cb" value="preg" /><span>Беременность или грудное вскармливание</span></label>
+              <label class="check-row"><input type="checkbox" class="contra-cb" value="heart" /><span>Болезни сердца, аритмия или тахикардия</span></label>
+              <label class="check-row"><input type="checkbox" class="contra-cb" value="bp" /><span>Повышенное артериальное давление (гипертония)</span></label>
+              <label class="check-row"><input type="checkbox" class="contra-cb" value="sleep" /><span>Тревожность, панические атаки или нарушения сна</span></label>
+              <label class="check-row"><input type="checkbox" class="contra-cb" value="meds" /><span>Приём рецептурных лекарств</span></label>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">ДОКАЗАТЕЛЬНАЯ БАЗА ДОБАВОК</span>
+            </div>
+            <div class="ergo-table">
+              <div class="ergo-row">
+                <div class="ergo-top">
+                  <span class="ergo-name">Креатин моногидрат</span>
+                  <span class="ergo-grade grade-a mono">ДОКАЗАНО (УРОВЕНЬ А)</span>
+                </div>
+                <div class="ergo-meta">Ресинтез АТФ и прирост силовой выносливости в коротких подходах (Kreider et al., 2017).</div>
+                <div class="ergo-dosage mono" id="outCreatineBox">3–5 г/день</div>
+              </div>
+
+              <div class="ergo-row">
+                <div class="ergo-top">
+                  <span class="ergo-name">Кофеин (до тренировки)</span>
+                  <span class="ergo-grade grade-a mono">ДОКАЗАНО (УРОВЕНЬ А)</span>
+                </div>
+                <div class="ergo-meta">Снижение воспринимаемого усилия (Guest et al., 2021). Безопасный суточный предел со всех источников — до 400 мг (EFSA, 2015).</div>
+                <div class="ergo-dosage mono" id="outCaffeineBox">Расчёт...</div>
+              </div>
+
+              <div class="ergo-row">
+                <div class="ergo-top">
+                  <span class="ergo-name">Сывороточный протеин</span>
+                  <span class="ergo-grade grade-b mono">ПИЩЕВОЙ БЕЛОК</span>
+                </div>
+                <div class="ergo-meta">Удобный способ добрать норму белка, если не получается из обычной еды (Kerksick et al., 2018). Не даёт преимуществ поверх достаточного белка в рационе.</div>
+              </div>
+
+              <div class="ergo-row">
+                <div class="ergo-top">
+                  <span class="ergo-name">BCAA / Тестобустеры / L-Карнитин</span>
+                  <span class="ergo-grade grade-d mono">НЕ ДОКАЗАНО</span>
+                </div>
+                <div class="ergo-meta">При достаточном потреблении белка (1,6–2,2 г/кг) дополнительный приём BCAA и «жиросжигателей» не показывает значимого эффекта в исследованиях.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="medical-footer">
+            Не является медицинской рекомендацией. При болях, хронических заболеваниях и до 18 лет — консультация врача.
+          </div>
+        </div>
+
+        <div class="gate-modal" id="overlayNutrition">
+          <div class="gate-box">
+            <div class="gate-header"><span>ДОСТУП ДЛЯ ПОДПИСЧИКОВ</span></div>
+            <div class="gate-title">Открыть матрицу продуктов и дозировки по ISSN</div>
+            <p class="gate-desc">Подай заявку в закрытый канал — доступ откроется мгновенно.</p>
+            <div class="gate-actions">
+              <button type="button" class="btn-primary glow-btn js-join-channel">1. Подать заявку в канал</button>
+              <button type="button" class="btn-ghost js-verify-access">2. Я подал заявку — Открыть</button>
+            </div>
+            <div class="gate-error hidden">Сначала нажми кнопку 1 и подай заявку в закрытый канал</div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ================================================================== -->
+    <!-- VIEW 4: МОИ ЗАМЕРЫ (P2.6 — CLOUDSTORAGE, ГРАФИК, НАПОМИНАНИЕ 28Д)  -->
+    <!-- ================================================================== -->
+    <main class="view" id="view-logs">
+      <div class="section-header">
+        <div class="eyebrow">04 · ДИНАМИКА И ПРОГРЕСС</div>
+        <h1 class="screen-title">Мои замеры и динамика</h1>
+      </div>
+
+      <section class="panel">
+        <div class="panel-header">
+          <span class="panel-title">ВЫБЕРИ ПОКАЗАТЕЛЬ ДЛЯ ГРАФИКА</span>
+          <button type="button" class="action-link mono" id="clearLogsBtn">СБРОС</button>
+        </div>
+        <select id="logMetricSelect" class="dark-select">
+          <option value="weight">Вес тела (кг)</option>
+          <option value="pushups">Отжимания (повт)</option>
+          <option value="pullups">Подтягивания (повт)</option>
+          <option value="dips">Брусья (повт)</option>
+          <option value="squats60">Приседания за 60с (повт)</option>
+          <option value="hang">Вис на турнике (сек)</option>
+          <option value="wallsit">Стульчик у стены (сек)</option>
+          <option value="plank">Планка (сек)</option>
+          <option value="srt">Тест «Сесть-встать» SRT (баллы)</option>
+          <option value="barbell_1rm">Силовой 1ПМ (кг)</option>
+        </select>
+
+        <!-- Comparison Delta Banner -->
+        <div id="logComparisonBanner" class="compare-badge hidden" style="margin-top: 12px;"></div>
+
+        <!-- SVG Progress Chart -->
+        <div class="svg-chart-container" id="logsChartBox" style="margin-top: 12px;"></div>
+
+        <!-- History List -->
+        <div class="logs-history-list" id="logsHistoryList"></div>
+      </section>
+
+      <!-- 4-Week Reminder Section -->
+      <section class="panel">
+        <div class="panel-header">
+          <span class="panel-title">КОНТРОЛЬНЫЙ ЗАМЕР ЧЕРЕЗ 4 НЕДЕЛИ</span>
+        </div>
+        <p class="field-hint">
+          Адаптация мышц и связок занимает время. Запланируй повторный тест ровно через 28 дней, чтобы объективно сравнить прогресс.
+        </p>
+        <button type="button" class="btn-primary" id="schedule28DaysBtn" style="margin-top: 8px;">
+          Повторить замер через 4 недели
+        </button>
+        <div class="field-hint mono" id="reminderStatusText" style="margin-top: 8px; color: var(--sig-cyan);"></div>
+      </section>
+    </main>
+
+    <!-- ================================================================== -->
+    <!-- VIEW 5: ИСТОЧНИКИ И ФОРМУЛЫ (P1.4 — НАУЧНАЯ БАЗА КАНАЛА)           -->
+    <!-- ================================================================== -->
+    <main class="view" id="view-sources">
+      <div class="section-header">
+        <div class="eyebrow">05 · ДОКАЗАТЕЛЬНАЯ БАЗА</div>
+        <h1 class="screen-title">Научные источники и формулы</h1>
+      </div>
+
+      <section class="panel">
+        <p class="panel-note">
+          Каждая цифра в приложении опирается на рецензируемые публикации и руководства (ACSM, ISSN, EFSA, AJCN). Нажми на любой источник, чтобы открыть публикацию (DOI):
+        </p>
+        <div class="sources-list" id="scientificSourcesList"></div>
+      </section>
+
+      <div class="medical-footer">
+        Не является медицинской рекомендацией. При болях, хронических заболеваниях и до 18 лет — консультация врача.
+      </div>
+    </main>
+
+    <!-- ================================================================== -->
+    <!-- MODAL: ПРИВАТНОСТЬ И ХРАНЕНИЕ ДАННЫХ (P2.8)                        -->
+    <!-- ================================================================== -->
+    <div class="modal-backdrop hidden" id="privacyModal">
+      <div class="modal-card">
+        <div class="panel-title" style="color: var(--sig-cyan); margin-bottom: 6px;">ПРИВАТНОСТЬ И ТВОИ ДАННЫЕ</div>
+        <h3 style="font-size: 16px; margin-bottom: 8px;">Какие данные мы храним и зачем</h3>
+        <div class="modal-text-list">
+          <p><strong>1. Только локально у тебя:</strong> Рост, вес, процент жира и история твоих замеров сохраняются исключительно на твоём устройстве и в личном облаке твоего аккаунта Telegram (<code>Telegram.WebApp.CloudStorage</code>). На сторонние серверы твои параметры тела не отправляются.</p>
+          <p><strong>2. Зачем они нужны:</strong> Чтобы тебе не приходилось вводить рост и вес заново при каждом входе и чтобы строить график твоего прогресса по неделям.</p>
+          <p><strong>3. Обезличенный код ролика:</strong> При переходе по ссылке из YouTube мы учитываем только технический тег упражнения (<code>start_param</code>, например <code>pushups</code>), чтобы сразу открыть нужный калькулятор.</p>
+        </div>
+        <button type="button" class="btn-primary" id="closePrivacyModalBtn" style="margin-top: 14px;">
+          Понятно, продолжить
+        </button>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- MODAL: КАРТОЧКА РЕЗУЛЬТАТА ДЛЯ ШАРИНГА (P2.7)                      -->
+    <!-- ================================================================== -->
+    <div class="modal-backdrop hidden" id="shareCardModal">
+      <div class="modal-card">
+        <div class="panel-header">
+          <span class="panel-title">КАРТОЧКА РЕЗУЛЬТАТА</span>
+          <button type="button" class="action-link mono" id="closeShareModalBtn">ЗАКРЫТЬ ✕</button>
+        </div>
+        <canvas id="shareCanvas" width="1080" height="1350" class="share-canvas-preview"></canvas>
+        <div class="gate-actions" style="margin-top: 12px;">
+          <button type="button" class="btn-primary glow-btn" id="shareToStoryBtn">
+            Опубликовать в Telegram Stories / Отправить
+          </button>
+          <button type="button" class="btn-ghost" id="downloadShareImgBtn">
+            Скачать картинку (.png)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fixed 5-Tab Bottom Navigation Dock -->
+    <nav class="bottom-dock">
+      <button type="button" class="dock-item active" data-view="view-metabolic">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+        </svg>
+        <span>Биометрия</span>
+      </button>
+      <button type="button" class="dock-item" data-view="view-strength">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+          <path d="M6.5 6.5l11 11"></path>
+          <path d="M21 21l-1-1"></path>
+          <path d="M3 3l1 1"></path>
+          <path d="M18 22l4-4"></path>
+          <path d="M2 6l4-4"></path>
+          <path d="M3 10l7-7"></path>
+          <path d="M14 21l7-7"></path>
+        </svg>
+        <span>Сила</span>
+      </button>
+      <button type="button" class="dock-item" data-view="view-nutrition">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+          <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+          <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+          <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+          <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+        </svg>
+        <span>Протокол</span>
+      </button>
+      <button type="button" class="dock-item" data-view="view-logs">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+          <polyline points="17 6 23 6 23 12"></polyline>
+        </svg>
+        <span>Замеры</span>
+      </button>
+      <button type="button" class="dock-item" data-view="view-sources">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        <span>Источники</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="formulas.js?v=15"></script>
+  <script src="app.js?v=15"></script>
+</body>
+</html>
