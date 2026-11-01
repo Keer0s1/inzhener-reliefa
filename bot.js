@@ -501,13 +501,23 @@ async function pollUpdates() {
   const cfg = loadConfig();
   const cleanUrl = cfg.miniAppUrl.replace(/\/+$/, "");
 
-  // Автоматически привязываем кнопку меню бота к актуальному URL Mini App
+  // Автоматически привязываем кнопку меню бота и описание к актуальному URL Mini App на серверах Telegram (работает 24/7)
   await tgCall("setChatMenuButton", {
     menu_button: {
       type: "web_app",
-      text: "Инженер Рельефа",
+      text: "📐 Инженер Рельефа",
       web_app: { url: `${cleanUrl}/?v=${Date.now()}` }
     }
+  });
+  await tgCall("setMyDescription", {
+    description:
+      "📐 ИНЖЕНЕР РЕЛЬЕФА — Цифровая раскладка по телу за 30 секунд.\n\n" +
+      "Калькулятор биометрии, процента жира, силовых нормативов калистеники и твой 4-недельный протокол.\n\n" +
+      "👇 Нажми синюю кнопку «📐 Инженер Рельефа» внизу слева, чтобы сразу открыть приложение!"
+  });
+  await tgCall("setMyShortDescription", {
+    short_description:
+      "📐 Калькулятор биометрии, рельефа и силовых нормативов калистеники. Жми «📐 Инженер Рельефа»!"
   });
 
   console.log("====================================================");
