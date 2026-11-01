@@ -1392,7 +1392,7 @@ function initLogsAndReminderControls() {
       const toast = document.getElementById("snapshotSaveToast");
       if (toast) {
         const dStr = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-        toast.textContent = `✅ Срез формы сохранён в облако Telegram (${dStr})! Табло «Было → Стало» обновлено.`;
+        toast.textContent = `Замер сохранён (${dStr})`;
       }
       if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
     });
@@ -1449,7 +1449,7 @@ function renderBeforeAfterBoard() {
 
   const totalCheckins = Math.max(wLogs.length, waistLogs.length, bfLogs.length, pushLogs.length);
   const badgeEl = document.getElementById("baTotalCheckinsBadge");
-  if (badgeEl) badgeEl.textContent = `Срезов: ${totalCheckins}`;
+  if (badgeEl) badgeEl.textContent = `Замеров: ${totalCheckins}`;
 
   const startW = wLogs.length > 0 ? wLogs[0].value : state.weight;
   const curW = wLogs.length > 0 ? wLogs[wLogs.length - 1].value : state.weight;
@@ -1576,7 +1576,7 @@ function renderLogsView() {
 
   if (entries.length === 0) {
     cmpBanner.classList.add("hidden");
-    chartBox.innerHTML = `<div style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:11.5px;text-align:center;padding:0 12px;">Нажми кнопку «💾 Сохранить замер в дневник» выше, чтобы построить график динамики.</div>`;
+    chartBox.innerHTML = `<div style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:11.5px;text-align:center;padding:0 12px;">Сохрани замер выше, чтобы появился график.</div>`;
     histEl.innerHTML = "";
     return;
   }
