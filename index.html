@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Manrope:wght@500;600;700;800&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=19" />
+  <link rel="stylesheet" href="style.css?v=21" />
 </head>
 <body data-gender="male">
   <div class="ambient-glow"></div>
@@ -858,23 +858,24 @@
     </main>
 
     <!-- ================================================================== -->
-    <!-- VIEW 4: МОИ ЗАМЕРЫ (CLOUDSTORAGE, БЫЛО -> СТАЛО, ГРАФИК, 28 ДНЕЙ)  -->
+    <!-- VIEW 4: МОИ ЗАМЕРЫ (АНТРОПОМЕТРИЯ ТЕЛА, % ЖИРА ПО ТАБЛИЦЕ, ДИНАМИКА) -->
     <!-- ================================================================== -->
     <main class="view" id="view-logs">
       <div class="section-header">
-        <div class="eyebrow">04 · ДНЕВНИК ФОРМЫ И ТРАНСФОРМАЦИЯ</div>
-        <h1 class="screen-title">Мои замеры: Было → Стало</h1>
+        <div class="eyebrow">04 · ЗАМЕРЫ ТЕЛА И ПРОЦЕНТ ЖИРА</div>
+        <h1 class="screen-title">Замер формы и таблица % жира</h1>
       </div>
 
-      <!-- Quick Body Snapshot Check-in Card -->
+      <!-- Step 1: Enter 3 Body Measurements -> Auto-Calculate Body Fat % & Table -->
       <section class="panel">
         <div class="panel-header">
-          <span class="panel-title">НОВЫЙ ЗАМЕР</span>
+          <span class="panel-title">СДЕЛАТЬ ЗАМЕР ТЕЛА</span>
+          <span class="mono tag-pill" id="snapCalcBfBadge">ЖИР: ~16.2%</span>
         </div>
 
-        <div class="snapshot-inputs-grid">
+        <div class="snapshot-inputs-grid snapshot-inputs-3">
           <div class="snap-field">
-            <label class="ac-label" for="snapInWeight">ВЕС ТЕЛА (КГ)</label>
+            <label class="ac-label" for="snapInWeight">ВЕС (КГ)</label>
             <input type="number" id="snapInWeight" step="0.1" value="82.0" class="fact-input mono" />
           </div>
           <div class="snap-field">
@@ -882,22 +883,41 @@
             <input type="number" id="snapInWaist" step="0.5" value="82" class="fact-input mono" />
           </div>
           <div class="snap-field">
-            <label class="ac-label" for="snapInBf">ЖИР (%)</label>
-            <input type="number" id="snapInBf" step="0.5" value="15" class="fact-input mono" />
-          </div>
-          <div class="snap-field">
-            <label class="ac-label" for="snapInPushups">ОТЖИМАНИЯ</label>
-            <input type="number" id="snapInPushups" step="1" value="25" class="fact-input mono" />
+            <label class="ac-label" for="snapInHeight">РОСТ (СМ)</label>
+            <input type="number" id="snapInHeight" step="1" value="178" class="fact-input mono" />
           </div>
         </div>
 
+        <!-- Live Calculated Body Composition Box -->
+        <div class="bf-live-result-card">
+          <div class="bf-live-top">
+            <div>
+              <span class="ac-label">РАСЧЁТНЫЙ ПРОЦЕНТ ЖИРА ПО ЗАМЕРУ</span>
+              <div class="bf-live-big mono" id="snapLiveBfVal">16.2%</div>
+            </div>
+            <div style="text-align: right;">
+              <span class="ac-label">КАТЕГОРИЯ ФОРМЫ</span>
+              <div class="bf-live-cat" id="snapLiveBfCat">Норма / База</div>
+            </div>
+          </div>
+          <div class="bf-live-sub mono" id="snapLiveMassSplit">
+            Сухая масса: 68.7 кг  ·  Жировая ткань: 13.3 кг  ·  Талия/Рост: 0.46
+          </div>
+        </div>
+
+        <!-- Body Fat Reference Table with Active Highlight -->
+        <div class="bf-table-wrap">
+          <div class="ac-label" style="margin-bottom: 6px;">ТАБЛИЦА ПРОЦЕНТА ЖИРА (ТВОЯ ЗОНА ВЫДЕЛЕНА)</div>
+          <div class="bf-ref-table" id="bfReferenceTable"></div>
+        </div>
+
         <button type="button" class="btn-primary glow-btn" id="saveFullSnapshotBtn" style="margin-top: 12px;">
-          <span>Сохранить замер</span>
+          <span>Сделать замер</span>
         </button>
         <div class="field-hint mono" id="snapshotSaveToast" style="margin-top: 8px; color: var(--sig-cyan);"></div>
       </section>
 
-      <!-- Before -> After Transformation Board -->
+      <!-- Before -> After Transformation Board (Purely Body Metrics) -->
       <section class="panel">
         <div class="panel-header">
           <span class="panel-title">БЫЛО → СТАЛО</span>
@@ -914,53 +934,44 @@
             <div class="spectrum-fill" id="baGoalProgressBar" style="width: 8%"></div>
           </div>
           <div class="field-hint" id="baGoalSubtext" style="margin-top:6px;">
-            Сохрани первый замер выше, чтобы зафиксировать стартовую точку А.
+            Введи вес, талию и рост выше и нажми «Сделать замер».
           </div>
         </div>
 
-        <!-- 4 Delta Comparison Cards -->
+        <!-- 4 Pure Body Delta Comparison Cards -->
         <div class="ba-cards-grid" id="baDeltaCardsGrid">
           <div class="ba-card">
             <span class="ac-label">ВЕС ТЕЛА</span>
-            <div class="ba-vals mono" id="baWeightVals">82.0 → 82.0 кг</div>
+            <div class="ba-vals mono" id="baWeightVals">82.0 → 75.0 кг</div>
             <span class="ba-delta mono" id="baWeightDelta">Точка старта</span>
           </div>
           <div class="ba-card">
             <span class="ac-label">ОБХВАТ ТАЛИИ</span>
-            <div class="ba-vals mono" id="baWaistVals">82 → 82 см</div>
-            <span class="ba-delta mono" id="baWaistDelta">Цель: 79.2 см</span>
+            <div class="ba-vals mono" id="baWaistVals">82 см</div>
+            <span class="ba-delta mono" id="baWaistDelta">Сухая цель: 79.2 см</span>
           </div>
           <div class="ba-card">
-            <span class="ac-label">% ЖИРА И СУХАЯ МАССА</span>
-            <div class="ba-vals mono" id="baBfVals">15% (69.7 кг)</div>
-            <span class="ba-delta mono" id="baBfDelta">Базовый расчёт</span>
+            <span class="ac-label">ПРОЦЕНТ ЖИРА</span>
+            <div class="ba-vals mono" id="baBfVals">16.2%</div>
+            <span class="ba-delta mono" id="baBfDelta">По талии и росту</span>
           </div>
           <div class="ba-card">
-            <span class="ac-label">ОТЖИМАНИЯ / СИЛА</span>
-            <div class="ba-vals mono" id="baPushupsVals">25 повт</div>
-            <span class="ba-delta mono" id="baPushupsDelta">Базовый тест</span>
+            <span class="ac-label">ЖИРОВАЯ / СУХАЯ МАССА</span>
+            <div class="ba-vals mono" id="baMassVals">13.3 кг жира</div>
+            <span class="ba-delta mono" id="baMassDelta">Сухая: 68.7 кг</span>
           </div>
         </div>
       </section>
 
       <section class="panel">
         <div class="panel-header">
-          <span class="panel-title">ГРАФИК И ИСТОРИЯ ПО ПОКАЗАТЕЛЯМ</span>
+          <span class="panel-title">ГРАФИК И ИСТОРИЯ ЗАМЕРОВ ТЕЛА</span>
           <button type="button" class="action-link mono" id="clearLogsBtn">СБРОС</button>
         </div>
         <select id="logMetricSelect" class="dark-select">
           <option value="weight">Вес тела (кг)</option>
           <option value="waist">Обхват талии (см)</option>
           <option value="bf">Процент жира (%)</option>
-          <option value="pushups">Отжимания (повт)</option>
-          <option value="pullups">Подтягивания (повт)</option>
-          <option value="dips">Брусья (повт)</option>
-          <option value="squats60">Приседания за 60с (повт)</option>
-          <option value="hang">Вис на турнике (сек)</option>
-          <option value="wallsit">Стульчик у стены (сек)</option>
-          <option value="plank">Планка (сек)</option>
-          <option value="srt">Тест «Сесть-встать» SRT (баллы)</option>
-          <option value="barbell_1rm">Силовой 1ПМ (кг)</option>
         </select>
 
         <!-- Comparison Delta Banner -->
@@ -1097,7 +1108,7 @@
     </nav>
   </div>
 
-  <script src="formulas.js?v=20"></script>
-  <script src="app.js?v=20"></script>
+  <script src="formulas.js?v=21"></script>
+  <script src="app.js?v=21"></script>
 </body>
 </html>

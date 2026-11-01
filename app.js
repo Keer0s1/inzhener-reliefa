@@ -1339,34 +1339,127 @@ function renderNutritionMatrix() {
 }
 
 /**
- * МОДУЛЬ 4: МОИ ЗАМЕРЫ (БЫЛО -> СТАЛО), CLOUDSTORAGE И НАПОМИНАНИЕ ЧЕРЕЗ 28 ДНЕЙ
+ * МОДУЛЬ 4: ЗАМЕР ТЕЛА (ВЕС + ТАЛИЯ + РОСТ -> РАСЧЁТ % ЖИРА ПО ТАБЛИЦЕ И ДИНАМИКА)
  */
+const BF_TABLE_TIERS = {
+  male: [
+    { min: 0, max: 10.9, range: "6–10%", title: "Сухой / Сечение", desc: "Чёткие 6 кубиков пресса, венозность, минимум жира" },
+    { min: 11.0, max: 14.9, range: "11–14%", title: "Атлет / Рельеф", desc: "Виден пресс и косые мышцы, узкая талия, спортивный V-силуэт" },
+    { min: 15.0, max: 19.9, range: "15–19%", title: "Норма / База", desc: "Верхние кубики угадываются, здоровый контур без живота" },
+    { min: 20.0, max: 24.9, range: "20–24%", title: "Сглаженный", desc: "Пресс скрыт под слоем, появляется мягкость на боках" },
+    { min: 25.0, max: 99, range: "25%+", title: "Избыток жира", desc: "Выраженный живот и бока, рекомендуется снижение веса" }
+  ],
+  female: [
+    { min: 0, max: 17.9, range: "14–17%", title: "Сухая фитнес-форма", desc: "Выраженный рельеф пресса и мышц ног, высокая сухость" },
+    { min: 18.0, max: 22.9, range: "18–22%", title: "Атлетичная / Тонус", desc: "Плоский живот, упругий спортивный силуэт и талия" },
+    { min: 23.0, max: 27.9, range: "23–27%", title: "Здоровая норма", desc: "Естественные женственные линии, комфортный процент жира" },
+    { min: 28.0, max: 32.9, range: "28–32%", title: "Сглаженный контур", desc: "Небольшой запас в области талии и бёдер" },
+    { min: 33.0, max: 99, range: "33%+", title: "Избыток", desc: "Рекомендуется плавный дефицит калорий" }
+  ]
+};
+
+function calcBodyFatFromMeasurements(weightKg, waistCm, heightCm, gender) {
+  const h = Math.max(140, Math.min(220, Number(heightCm) || 178));
+  const w = Math.max(38, Math.min(180, Number(weightKg) || 82));
+  const waist = Math.max(50, Math.min(160, Number(waistCm) || 82));
+
+  // RFM (Woolcott & Bergman) + калибровка ИМТ и талии для атлетичной антропометрии
+  const rfmBase = gender === "female" ? 76 - 20 * (h / waist) : 64 - 20 * (h / waist);
+  const bmi = w / Math.pow(h / 100, 2);
+  const bmiComponent = gender === "female" ? 1.15 * bmi - 4.0 : 1.1 * bmi - 12.8;
+  const rawBf = rfmBase * 0.68 + bmiComponent * 0.32 - (gender === "female" ? 0.5 : 1.8);
+  const minClamp = gender === "female" ? 12.0 : 5.5;
+  const bfPct = +Math.max(minClamp, Math.min(48.0, rawBf)).toFixed(1);
+
+  const fatKg = +((w * bfPct) / 100).toFixed(1);
+  const lbmKg = +(w - fatKg).toFixed(1);
+  const whtr = +(waist / h).toFixed(2);
+
+  const tiers = BF_TABLE_TIERS[gender === "female" ? "female" : "male"];
+  const activeTierIdx = tiers.findIndex((t) => bfPct >= t.min && bfPct <= t.max);
+  const activeTier = tiers[activeTierIdx >= 0 ? activeTierIdx : 2];
+
+  return {
+    bfPct,
+    fatKg,
+    lbmKg,
+    whtr,
+    activeTierIdx: activeTierIdx >= 0 ? activeTierIdx : 2,
+    catTitle: activeTier.title,
+    tiers
+  };
+}
+
+function updateLiveSnapBfCalculator() {
+  const snapW = document.getElementById("snapInWeight");
+  const snapWaist = document.getElementById("snapInWaist");
+  const snapH = document.getElementById("snapInHeight");
+  if (!snapW || !snapWaist || !snapH) return;
+
+  const wVal = parseFloat(snapW.value) || state.weight;
+  const waistVal = parseFloat(snapWaist.value) || state.waist;
+  const hVal = parseFloat(snapH.value) || state.height;
+
+  const calc = calcBodyFatFromMeasurements(wVal, waistVal, hVal, state.gender);
+
+  const badge = document.getElementById("snapCalcBfBadge");
+  const liveVal = document.getElementById("snapLiveBfVal");
+  const liveCat = document.getElementById("snapLiveBfCat");
+  const liveSplit = document.getElementById("snapLiveMassSplit");
+  const tableEl = document.getElementById("bfReferenceTable");
+
+  if (badge) badge.textContent = `ЖИР: ~${calc.bfPct}%`;
+  if (liveVal) liveVal.textContent = `${calc.bfPct}%`;
+  if (liveCat) liveCat.textContent = calc.catTitle;
+  if (liveSplit) {
+    liveSplit.textContent = `Сухая масса: ${calc.lbmKg} кг  ·  Жир: ${calc.fatKg} кг  ·  Талия/Рост: ${calc.whtr}`;
+  }
+
+  if (tableEl) {
+    tableEl.innerHTML = calc.tiers
+      .map(
+        (t, idx) => `
+        <div class="bf-ref-row ${idx === calc.activeTierIdx ? "active" : ""}">
+          <span class="bf-ref-range">${t.range}</span>
+          <span class="bf-ref-desc"><strong>${t.title}</strong> — ${t.desc}</span>
+        </div>
+      `
+      )
+      .join("");
+  }
+}
+
 function initLogsAndReminderControls() {
   document.getElementById("logMetricSelect").addEventListener("change", renderLogsView);
+
+  ["snapInWeight", "snapInWaist", "snapInHeight"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("input", updateLiveSnapBfCalculator);
+    }
+  });
 
   const saveSnapBtn = document.getElementById("saveFullSnapshotBtn");
   if (saveSnapBtn) {
     saveSnapBtn.addEventListener("click", () => {
       const wVal = parseFloat(document.getElementById("snapInWeight").value) || state.weight;
       const waistVal = parseFloat(document.getElementById("snapInWaist").value) || state.waist;
-      const bfVal = parseFloat(document.getElementById("snapInBf").value) || state.bf;
-      const pushVal = parseFloat(document.getElementById("snapInPushups").value);
+      const hVal = Math.round(parseFloat(document.getElementById("snapInHeight").value) || state.height);
+      const calc = calcBodyFatFromMeasurements(wVal, waistVal, hVal, state.gender);
+      const bfVal = calc.bfPct;
       const nowIso = new Date().toISOString();
 
       if (!Array.isArray(state.logs.weight)) state.logs.weight = [];
       if (!Array.isArray(state.logs.waist)) state.logs.waist = [];
       if (!Array.isArray(state.logs.bf)) state.logs.bf = [];
-      if (!Array.isArray(state.logs.pushups)) state.logs.pushups = [];
 
       state.logs.weight.push({ date: nowIso, weight: wVal, value: wVal });
       state.logs.waist.push({ date: nowIso, value: waistVal });
       state.logs.bf.push({ date: nowIso, value: bfVal });
-      if (!isNaN(pushVal) && pushVal >= 0) {
-        state.logs.pushups.push({ date: nowIso, value: pushVal });
-      }
 
       state.weight = wVal;
       state.waist = waistVal;
+      state.height = hVal;
       state.bf = bfVal;
 
       const inW = document.getElementById("inWeight");
@@ -1381,6 +1474,8 @@ function initLogsAndReminderControls() {
         document.getElementById("valWaist").textContent = waistVal;
         updateSliderFill(inWaist);
       }
+      const inH = document.getElementById("inHeight");
+      if (inH) inH.value = hVal;
       document.getElementById("valBf").textContent = bfVal;
 
       saveUserState();
@@ -1392,7 +1487,7 @@ function initLogsAndReminderControls() {
       const toast = document.getElementById("snapshotSaveToast");
       if (toast) {
         const dStr = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
-        toast.textContent = `Замер сохранён (${dStr})`;
+        toast.textContent = `Замер сохранён (${dStr}) · Расчётный жир: ${bfVal}% (${calc.catTitle})`;
       }
       if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
     });
@@ -1431,23 +1526,19 @@ function initLogsAndReminderControls() {
 function renderBeforeAfterBoard() {
   const snapW = document.getElementById("snapInWeight");
   const snapWaist = document.getElementById("snapInWaist");
-  const snapBf = document.getElementById("snapInBf");
-  const snapPush = document.getElementById("snapInPushups");
+  const snapH = document.getElementById("snapInHeight");
 
   if (snapW && document.activeElement !== snapW) snapW.value = state.weight.toFixed(1);
   if (snapWaist && document.activeElement !== snapWaist) snapWaist.value = state.waist;
-  if (snapBf && document.activeElement !== snapBf) snapBf.value = state.bf;
-  if (snapPush && document.activeElement !== snapPush) {
-    const pLogs = state.logs.pushups || [];
-    snapPush.value = pLogs.length > 0 ? pLogs[pLogs.length - 1].value : state.bwValue;
-  }
+  if (snapH && document.activeElement !== snapH) snapH.value = state.height;
+
+  updateLiveSnapBfCalculator();
 
   const wLogs = state.logs.weight || [];
   const waistLogs = state.logs.waist || [];
   const bfLogs = state.logs.bf || [];
-  const pushLogs = state.logs.pushups || [];
 
-  const totalCheckins = Math.max(wLogs.length, waistLogs.length, bfLogs.length, pushLogs.length);
+  const totalCheckins = Math.max(wLogs.length, waistLogs.length, bfLogs.length);
   const badgeEl = document.getElementById("baTotalCheckinsBadge");
   if (badgeEl) badgeEl.textContent = `Замеров: ${totalCheckins}`;
 
@@ -1477,13 +1568,13 @@ function renderBeforeAfterBoard() {
   }
   if (goalSub) {
     if (wLogs.length === 0) {
-      goalSub.textContent = `Точка старта: ${curW.toFixed(1)} кг → Цель: ${targetW.toFixed(1)} кг (разница ${remKg} кг). Нажми «Сохранить замер» выше, чтобы начать отсчёт.`;
+      goalSub.textContent = `Введи вес, талию и рост выше и нажми «Сделать замер», чтобы зафиксировать точку старта.`;
     } else if (wLogs.length === 1) {
-      goalSub.textContent = `Точка А зафиксирована (${startW.toFixed(1)} кг). До цели ${targetW.toFixed(1)} кг осталось ${remKg} кг — внеси следующий замер через неделю!`;
+      goalSub.textContent = `Точка старта записана (${startW.toFixed(1)} кг). До цели ${targetW.toFixed(1)} кг осталось ${remKg} кг.`;
     } else {
       const diffW = +(curW - startW).toFixed(1);
       const signW = diffW > 0 ? `+${diffW}` : `${diffW}`;
-      goalSub.textContent = `Изменение от старта: ${signW} кг. До целевой отметки ${targetW.toFixed(1)} кг осталось ${remKg} кг.`;
+      goalSub.textContent = `Изменение веса: ${signW} кг. До цели ${targetW.toFixed(1)} кг осталось ${remKg} кг.`;
     }
   }
 
@@ -1516,46 +1607,47 @@ function renderBeforeAfterBoard() {
       waistDeltaEl.textContent = `Динамика: ${d > 0 ? "+" + d : d} см`;
       waistDeltaEl.classList.toggle("positive", d < 0);
     } else {
-      waistValsEl.textContent = `${curWaist} см сейчас`;
-      waistDeltaEl.textContent = `Ориентир рельефа: ${idealWaist} см`;
+      waistValsEl.textContent = `${curWaist} см`;
+      waistDeltaEl.textContent = `Сухая цель: ${idealWaist} см`;
       waistDeltaEl.classList.remove("positive");
     }
   }
 
-  // Карточка 3: Жир % и LBM
-  const startBf = bfLogs.length > 0 ? bfLogs[0].value : state.bf;
-  const curBf = bfLogs.length > 0 ? bfLogs[bfLogs.length - 1].value : state.bf;
-  const curLbm = +(curW * (1 - curBf / 100)).toFixed(1);
+  // Карточка 3: Процент жира (по замеру)
+  const calcCur = calcBodyFatFromMeasurements(curW, curWaist, state.height, state.gender);
+  const startBf = bfLogs.length > 0 ? bfLogs[0].value : calcCur.bfPct;
+  const curBf = bfLogs.length > 0 ? bfLogs[bfLogs.length - 1].value : calcCur.bfPct;
   const bfValsEl = document.getElementById("baBfVals");
   const bfDeltaEl = document.getElementById("baBfDelta");
   if (bfValsEl && bfDeltaEl) {
     if (bfLogs.length >= 2) {
       const d = +(curBf - startBf).toFixed(1);
       bfValsEl.textContent = `${startBf}% → ${curBf}%`;
-      bfDeltaEl.textContent = `Жир: ${d > 0 ? "+" + d : d}% · Сухая: ${curLbm} кг`;
+      bfDeltaEl.textContent = `Динамика: ${d > 0 ? "+" + d : d}% (${calcCur.catTitle})`;
       bfDeltaEl.classList.toggle("positive", d < 0);
     } else {
-      bfValsEl.textContent = `${curBf}% · LBM ${curLbm} кг`;
-      bfDeltaEl.textContent = `Жировая масса: ~${((curW * curBf) / 100).toFixed(1)} кг`;
+      bfValsEl.textContent = `${curBf}%`;
+      bfDeltaEl.textContent = calcCur.catTitle;
       bfDeltaEl.classList.remove("positive");
     }
   }
 
-  // Карточка 4: Отжимания / Сила
-  const startPush = pushLogs.length > 0 ? pushLogs[0].value : state.bwValue;
-  const curPush = pushLogs.length > 0 ? pushLogs[pushLogs.length - 1].value : state.bwValue;
-  const pushValsEl = document.getElementById("baPushupsVals");
-  const pushDeltaEl = document.getElementById("baPushupsDelta");
-  if (pushValsEl && pushDeltaEl) {
-    if (pushLogs.length >= 2) {
-      const d = curPush - startPush;
-      pushValsEl.textContent = `${startPush} → ${curPush} повт`;
-      pushDeltaEl.textContent = `Прирост: ${d >= 0 ? "+" + d : d} повт`;
-      pushDeltaEl.classList.toggle("positive", d > 0);
+  // Карточка 4: Жировая / Сухая масса в кг
+  const startFatKg = +((startW * startBf) / 100).toFixed(1);
+  const curFatKg = +((curW * curBf) / 100).toFixed(1);
+  const curLbmKg = +(curW - curFatKg).toFixed(1);
+  const massValsEl = document.getElementById("baMassVals");
+  const massDeltaEl = document.getElementById("baMassDelta");
+  if (massValsEl && massDeltaEl) {
+    if (wLogs.length >= 2 && bfLogs.length >= 2) {
+      const dFat = +(curFatKg - startFatKg).toFixed(1);
+      massValsEl.textContent = `${startFatKg} → ${curFatKg} кг жира`;
+      massDeltaEl.textContent = `Жир: ${dFat > 0 ? "+" + dFat : dFat} кг · Сухая: ${curLbmKg} кг`;
+      massDeltaEl.classList.toggle("positive", dFat < 0);
     } else {
-      pushValsEl.textContent = `${curPush} повторений`;
-      pushDeltaEl.textContent = pushLogs.length === 1 ? "Точка А сохранена" : "Текущий силовой ориентир";
-      pushDeltaEl.classList.remove("positive");
+      massValsEl.textContent = `${curFatKg} кг жира`;
+      massDeltaEl.textContent = `Сухая масса: ${curLbmKg} кг`;
+      massDeltaEl.classList.remove("positive");
     }
   }
 }
