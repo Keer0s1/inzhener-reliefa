@@ -76,6 +76,8 @@ const state = {
   // Замеры и хранилище
   logs: {
     weight: [],
+    waist: [],
+    bf: [],
     pushups: [],
     pullups: [],
     dips: [],
@@ -238,6 +240,7 @@ function loadPersistedUserState(done) {
         if (saved.targetWeight) state.targetWeight = saved.targetWeight;
         if (saved.height) state.height = saved.height;
         if (saved.age) state.age = saved.age;
+        if (saved.waist) state.waist = saved.waist;
         if (saved.bf) state.bf = saved.bf;
         if (saved.logs) state.logs = { ...state.logs, ...saved.logs };
         if (saved.nextReminderDate) state.nextReminderDate = saved.nextReminderDate;
@@ -248,6 +251,8 @@ function loadPersistedUserState(done) {
         document.getElementById("valTargetWeight").textContent = state.targetWeight.toFixed(1);
         document.getElementById("inHeight").value = state.height;
         document.getElementById("inAge").value = state.age;
+        document.getElementById("inWaist").value = state.waist;
+        document.getElementById("valWaist").textContent = state.waist;
       } else {
         if (!localStorage.getItem("ir_privacy_seen")) {
           document.getElementById("privacyModal").classList.remove("hidden");
@@ -257,6 +262,16 @@ function loadPersistedUserState(done) {
       state.isAdmin = checkIsAuthorizedAdmin();
       const urlParams = new URLSearchParams(window.location.search);
       const modeParam = urlParams.get("mode") || "";
+
+      // Автоматически регистрируем технический chat_id пользователя в облачном воркере бота для уведомлений
+      const tgUser = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : null;
+      if (tgUser && tgUser.id) {
+        fetch("https://inzhener-reliefa-bot.cf-bot.workers.dev", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "register_user", chatId: Number(tgUser.id) })
+        }).catch(() => {});
+      }
 
       // Если вошёл Админ (@Keer0s1 или добавленный через /admin в боте) —
       // Mini App сразу узнаёт его и открывает все расчёты без заявки!
@@ -282,6 +297,7 @@ function saveUserState() {
     targetWeight: state.targetWeight,
     height: state.height,
     age: state.age,
+    waist: state.waist,
     bf: state.bf,
     logs: state.logs,
     nextReminderDate: state.nextReminderDate
@@ -840,6 +856,7 @@ function recalcMetabolic() {
   document.getElementById("matrixKcalSpan").textContent = plan.targetKcal;
   renderNutritionMatrix();
   recalcSupplementsUI();
+  renderBeforeAfterBoard();
 }
 
 function drawRangeTrajectoryChart(startW, endW, weeksMin, weeksMax) {
@@ -1322,10 +1339,64 @@ function renderNutritionMatrix() {
 }
 
 /**
- * МОДУЛЬ 4: МОИ ЗАМЕРЫ И НАПОМИНАНИЕ ЧЕРЕЗ 28 ДНЕЙ
+ * МОДУЛЬ 4: МОИ ЗАМЕРЫ (БЫЛО -> СТАЛО), CLOUDSTORAGE И НАПОМИНАНИЕ ЧЕРЕЗ 28 ДНЕЙ
  */
 function initLogsAndReminderControls() {
   document.getElementById("logMetricSelect").addEventListener("change", renderLogsView);
+
+  const saveSnapBtn = document.getElementById("saveFullSnapshotBtn");
+  if (saveSnapBtn) {
+    saveSnapBtn.addEventListener("click", () => {
+      const wVal = parseFloat(document.getElementById("snapInWeight").value) || state.weight;
+      const waistVal = parseFloat(document.getElementById("snapInWaist").value) || state.waist;
+      const bfVal = parseFloat(document.getElementById("snapInBf").value) || state.bf;
+      const pushVal = parseFloat(document.getElementById("snapInPushups").value);
+      const nowIso = new Date().toISOString();
+
+      if (!Array.isArray(state.logs.weight)) state.logs.weight = [];
+      if (!Array.isArray(state.logs.waist)) state.logs.waist = [];
+      if (!Array.isArray(state.logs.bf)) state.logs.bf = [];
+      if (!Array.isArray(state.logs.pushups)) state.logs.pushups = [];
+
+      state.logs.weight.push({ date: nowIso, weight: wVal, value: wVal });
+      state.logs.waist.push({ date: nowIso, value: waistVal });
+      state.logs.bf.push({ date: nowIso, value: bfVal });
+      if (!isNaN(pushVal) && pushVal >= 0) {
+        state.logs.pushups.push({ date: nowIso, value: pushVal });
+      }
+
+      state.weight = wVal;
+      state.waist = waistVal;
+      state.bf = bfVal;
+
+      const inW = document.getElementById("inWeight");
+      if (inW) {
+        inW.value = wVal;
+        document.getElementById("valWeight").textContent = wVal.toFixed(1);
+        updateSliderFill(inW);
+      }
+      const inWaist = document.getElementById("inWaist");
+      if (inWaist) {
+        inWaist.value = waistVal;
+        document.getElementById("valWaist").textContent = waistVal;
+        updateSliderFill(inWaist);
+      }
+      document.getElementById("valBf").textContent = bfVal;
+
+      saveUserState();
+      recalcMetabolic();
+      recalcBodyweight();
+      recalcStrength();
+      renderLogsView();
+
+      const toast = document.getElementById("snapshotSaveToast");
+      if (toast) {
+        const dStr = new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+        toast.textContent = `✅ Срез формы сохранён в облако Telegram (${dStr})! Табло «Было → Стало» обновлено.`;
+      }
+      if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
+    });
+  }
 
   document.getElementById("clearLogsBtn").addEventListener("click", () => {
     const metric = document.getElementById("logMetricSelect").value;
@@ -1357,7 +1428,141 @@ function initLogsAndReminderControls() {
   });
 }
 
+function renderBeforeAfterBoard() {
+  const snapW = document.getElementById("snapInWeight");
+  const snapWaist = document.getElementById("snapInWaist");
+  const snapBf = document.getElementById("snapInBf");
+  const snapPush = document.getElementById("snapInPushups");
+
+  if (snapW && document.activeElement !== snapW) snapW.value = state.weight.toFixed(1);
+  if (snapWaist && document.activeElement !== snapWaist) snapWaist.value = state.waist;
+  if (snapBf && document.activeElement !== snapBf) snapBf.value = state.bf;
+  if (snapPush && document.activeElement !== snapPush) {
+    const pLogs = state.logs.pushups || [];
+    snapPush.value = pLogs.length > 0 ? pLogs[pLogs.length - 1].value : state.bwValue;
+  }
+
+  const wLogs = state.logs.weight || [];
+  const waistLogs = state.logs.waist || [];
+  const bfLogs = state.logs.bf || [];
+  const pushLogs = state.logs.pushups || [];
+
+  const totalCheckins = Math.max(wLogs.length, waistLogs.length, bfLogs.length, pushLogs.length);
+  const badgeEl = document.getElementById("baTotalCheckinsBadge");
+  if (badgeEl) badgeEl.textContent = `Срезов: ${totalCheckins}`;
+
+  const startW = wLogs.length > 0 ? wLogs[0].value : state.weight;
+  const curW = wLogs.length > 0 ? wLogs[wLogs.length - 1].value : state.weight;
+  const targetW = state.targetWeight;
+
+  const goalTitle = document.getElementById("baGoalTitle");
+  const goalPctEl = document.getElementById("baGoalPct");
+  const goalBar = document.getElementById("baGoalProgressBar");
+  const goalSub = document.getElementById("baGoalSubtext");
+
+  if (goalTitle) {
+    goalTitle.textContent = `ПУТЬ К ЦЕЛЕВОМУ ВЕСУ (${targetW.toFixed(1)} КГ)`;
+  }
+
+  const totalDist = Math.abs(startW - targetW);
+  const coveredDist = startW >= targetW ? Math.max(0, startW - curW) : Math.max(0, curW - startW);
+  const pct = totalDist > 0.1 ? Math.min(100, Math.round((coveredDist / totalDist) * 100)) : 100;
+  const remKg = +(Math.abs(curW - targetW)).toFixed(1);
+
+  if (goalPctEl) {
+    goalPctEl.textContent = wLogs.length >= 2 ? `${pct}% пути` : `Цель: ${remKg} кг`;
+  }
+  if (goalBar) {
+    goalBar.style.width = `${wLogs.length >= 2 ? Math.max(8, pct) : 12}%`;
+  }
+  if (goalSub) {
+    if (wLogs.length === 0) {
+      goalSub.textContent = `Точка старта: ${curW.toFixed(1)} кг → Цель: ${targetW.toFixed(1)} кг (разница ${remKg} кг). Нажми «Сохранить замер» выше, чтобы начать отсчёт.`;
+    } else if (wLogs.length === 1) {
+      goalSub.textContent = `Точка А зафиксирована (${startW.toFixed(1)} кг). До цели ${targetW.toFixed(1)} кг осталось ${remKg} кг — внеси следующий замер через неделю!`;
+    } else {
+      const diffW = +(curW - startW).toFixed(1);
+      const signW = diffW > 0 ? `+${diffW}` : `${diffW}`;
+      goalSub.textContent = `Изменение от старта: ${signW} кг. До целевой отметки ${targetW.toFixed(1)} кг осталось ${remKg} кг.`;
+    }
+  }
+
+  // Карточка 1: Вес
+  const wValsEl = document.getElementById("baWeightVals");
+  const wDeltaEl = document.getElementById("baWeightDelta");
+  if (wValsEl && wDeltaEl) {
+    if (wLogs.length >= 2) {
+      const d = +(curW - startW).toFixed(1);
+      wValsEl.textContent = `${startW.toFixed(1)} → ${curW.toFixed(1)} кг`;
+      wDeltaEl.textContent = `Динамика: ${d > 0 ? "+" + d : d} кг`;
+      wDeltaEl.classList.toggle("positive", (state.goal === "cut" && d < 0) || (state.goal === "bulk" && d > 0));
+    } else {
+      wValsEl.textContent = `${curW.toFixed(1)} → ${targetW.toFixed(1)} кг`;
+      wDeltaEl.textContent = `До цели: ${remKg} кг`;
+      wDeltaEl.classList.remove("positive");
+    }
+  }
+
+  // Карточка 2: Талия
+  const startWaist = waistLogs.length > 0 ? waistLogs[0].value : state.waist;
+  const curWaist = waistLogs.length > 0 ? waistLogs[waistLogs.length - 1].value : state.waist;
+  const idealWaist = +(state.height * (state.gender === "male" ? 0.445 : 0.42)).toFixed(1);
+  const waistValsEl = document.getElementById("baWaistVals");
+  const waistDeltaEl = document.getElementById("baWaistDelta");
+  if (waistValsEl && waistDeltaEl) {
+    if (waistLogs.length >= 2) {
+      const d = +(curWaist - startWaist).toFixed(1);
+      waistValsEl.textContent = `${startWaist} → ${curWaist} см`;
+      waistDeltaEl.textContent = `Динамика: ${d > 0 ? "+" + d : d} см`;
+      waistDeltaEl.classList.toggle("positive", d < 0);
+    } else {
+      waistValsEl.textContent = `${curWaist} см сейчас`;
+      waistDeltaEl.textContent = `Ориентир рельефа: ${idealWaist} см`;
+      waistDeltaEl.classList.remove("positive");
+    }
+  }
+
+  // Карточка 3: Жир % и LBM
+  const startBf = bfLogs.length > 0 ? bfLogs[0].value : state.bf;
+  const curBf = bfLogs.length > 0 ? bfLogs[bfLogs.length - 1].value : state.bf;
+  const curLbm = +(curW * (1 - curBf / 100)).toFixed(1);
+  const bfValsEl = document.getElementById("baBfVals");
+  const bfDeltaEl = document.getElementById("baBfDelta");
+  if (bfValsEl && bfDeltaEl) {
+    if (bfLogs.length >= 2) {
+      const d = +(curBf - startBf).toFixed(1);
+      bfValsEl.textContent = `${startBf}% → ${curBf}%`;
+      bfDeltaEl.textContent = `Жир: ${d > 0 ? "+" + d : d}% · Сухая: ${curLbm} кг`;
+      bfDeltaEl.classList.toggle("positive", d < 0);
+    } else {
+      bfValsEl.textContent = `${curBf}% · LBM ${curLbm} кг`;
+      bfDeltaEl.textContent = `Жировая масса: ~${((curW * curBf) / 100).toFixed(1)} кг`;
+      bfDeltaEl.classList.remove("positive");
+    }
+  }
+
+  // Карточка 4: Отжимания / Сила
+  const startPush = pushLogs.length > 0 ? pushLogs[0].value : state.bwValue;
+  const curPush = pushLogs.length > 0 ? pushLogs[pushLogs.length - 1].value : state.bwValue;
+  const pushValsEl = document.getElementById("baPushupsVals");
+  const pushDeltaEl = document.getElementById("baPushupsDelta");
+  if (pushValsEl && pushDeltaEl) {
+    if (pushLogs.length >= 2) {
+      const d = curPush - startPush;
+      pushValsEl.textContent = `${startPush} → ${curPush} повт`;
+      pushDeltaEl.textContent = `Прирост: ${d >= 0 ? "+" + d : d} повт`;
+      pushDeltaEl.classList.toggle("positive", d > 0);
+    } else {
+      pushValsEl.textContent = `${curPush} повторений`;
+      pushDeltaEl.textContent = pushLogs.length === 1 ? "Точка А сохранена" : "Текущий силовой ориентир";
+      pushDeltaEl.classList.remove("positive");
+    }
+  }
+}
+
 function renderLogsView() {
+  renderBeforeAfterBoard();
+
   const metric = document.getElementById("logMetricSelect").value;
   const entries = state.logs[metric] || [];
   const histEl = document.getElementById("logsHistoryList");
@@ -1371,7 +1576,7 @@ function renderLogsView() {
 
   if (entries.length === 0) {
     cmpBanner.classList.add("hidden");
-    chartBox.innerHTML = `<div style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:11.5px;text-align:center;">Пока нет сохранённых замеров по этому тесту.<br>Нажми «+ В мои замеры» после расчёта.</div>`;
+    chartBox.innerHTML = `<div style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-dim);font-size:11.5px;text-align:center;padding:0 12px;">Нажми кнопку «💾 Сохранить замер в дневник» выше, чтобы построить график динамики.</div>`;
     histEl.innerHTML = "";
     return;
   }
@@ -1379,12 +1584,13 @@ function renderLogsView() {
   if (entries.length >= 2) {
     const first = entries[0].value;
     const last = entries[entries.length - 1].value;
-    const diffPct = first > 0 ? Math.round(((last - first) / first) * 100) : 0;
-    const sign = diffPct > 0 ? `+${diffPct}%` : `${diffPct}%`;
+    const diff = +(last - first).toFixed(1);
+    const sign = diff > 0 ? `+${diff}` : `${diff}`;
     cmpBanner.classList.remove("hidden");
-    cmpBanner.textContent = `Прогресс: было ${first} → стало ${last} (${sign})`;
+    cmpBanner.textContent = `Динамика: было ${first} → стало ${last} (${sign})`;
   } else {
-    cmpBanner.classList.add("hidden");
+    cmpBanner.classList.remove("hidden");
+    cmpBanner.textContent = `Стартовая точка зафиксирована: ${entries[0].value}. Добавь следующий замер для сравнения «Было → Стало».`;
   }
 
   const vals = entries.map((e) => e.value);
@@ -1466,6 +1672,26 @@ function initPrivacyAndShareModals() {
     localStorage.setItem("ir_privacy_seen", "1");
     privModal.classList.add("hidden");
   });
+  const wipeBtn = document.getElementById("wipeAllUserDataBtn");
+  if (wipeBtn) {
+    wipeBtn.addEventListener("click", () => {
+      Object.keys(state.logs).forEach((k) => {
+        state.logs[k] = [];
+      });
+      state.nextReminderDate = null;
+      try {
+        localStorage.removeItem("ir_user_data_v1");
+      } catch (e) {}
+      if (tg && tg.CloudStorage) {
+        try {
+          tg.CloudStorage.removeItem("ir_user_data_v1", () => {});
+        } catch (e) {}
+      }
+      renderLogsView();
+      wipeBtn.textContent = "✅ Все твои замеры удалены с устройства и из облака";
+      if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
+    });
+  }
 
   const shareModal = document.getElementById("shareCardModal");
   document.getElementById("shareBwCardBtn").addEventListener("click", () => {

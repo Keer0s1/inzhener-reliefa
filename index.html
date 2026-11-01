@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self';" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://telegram.org; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.workers.dev; object-src 'none'; base-uri 'self';" />
   <meta name="referrer" content="no-referrer" />
   <title>ИНЖЕНЕР РЕЛЬЕФА — Цифровая биометрия и калистеника</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Manrope:wght@500;600;700;800&family=Unbounded:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=18" />
+  <link rel="stylesheet" href="style.css?v=19" />
 </head>
 <body data-gender="male">
   <div class="ambient-glow"></div>
@@ -858,21 +858,104 @@
     </main>
 
     <!-- ================================================================== -->
-    <!-- VIEW 4: МОИ ЗАМЕРЫ (P2.6 — CLOUDSTORAGE, ГРАФИК, НАПОМИНАНИЕ 28Д)  -->
+    <!-- VIEW 4: МОИ ЗАМЕРЫ (CLOUDSTORAGE, БЫЛО -> СТАЛО, ГРАФИК, 28 ДНЕЙ)  -->
     <!-- ================================================================== -->
     <main class="view" id="view-logs">
       <div class="section-header">
-        <div class="eyebrow">04 · ДИНАМИКА И ПРОГРЕСС</div>
-        <h1 class="screen-title">Мои замеры и динамика</h1>
+        <div class="eyebrow">04 · ДНЕВНИК ФОРМЫ И ТРАНСФОРМАЦИЯ</div>
+        <h1 class="screen-title">Мои замеры: Было → Стало</h1>
       </div>
+
+      <!-- Quick Body Snapshot Check-in Card -->
+      <section class="panel">
+        <div class="panel-header">
+          <span class="panel-title">ЗАФИКСИРОВАТЬ СРЕЗ ФОРМЫ СЕГОДНЯ</span>
+          <span class="mono tag-pill" id="snapshotCloudBadge">ОБЛАКО TG</span>
+        </div>
+        <p class="field-hint">
+          Сохрани текущие параметры тела и силовые в личное облако Telegram, чтобы отслеживать реальную динамику по неделям:
+        </p>
+
+        <div class="snapshot-inputs-grid">
+          <div class="snap-field">
+            <label class="ac-label" for="snapInWeight">ВЕС ТЕЛА (КГ)</label>
+            <input type="number" id="snapInWeight" step="0.1" value="82.0" class="fact-input mono" />
+          </div>
+          <div class="snap-field">
+            <label class="ac-label" for="snapInWaist">ТАЛИЯ (СМ)</label>
+            <input type="number" id="snapInWaist" step="0.5" value="82" class="fact-input mono" />
+          </div>
+          <div class="snap-field">
+            <label class="ac-label" for="snapInBf">ЖИР (%)</label>
+            <input type="number" id="snapInBf" step="0.5" value="15" class="fact-input mono" />
+          </div>
+          <div class="snap-field">
+            <label class="ac-label" for="snapInPushups">ОТЖИМАНИЯ</label>
+            <input type="number" id="snapInPushups" step="1" value="25" class="fact-input mono" />
+          </div>
+        </div>
+
+        <button type="button" class="btn-primary glow-btn" id="saveFullSnapshotBtn" style="margin-top: 12px;">
+          <span>💾 Сохранить замер в дневник («Было → Стало»)</span>
+        </button>
+        <div class="field-hint mono" id="snapshotSaveToast" style="margin-top: 8px; color: var(--sig-cyan);"></div>
+      </section>
+
+      <!-- Before -> After Transformation Board -->
+      <section class="panel">
+        <div class="panel-header">
+          <span class="panel-title">ТАБЛО ПРОГРЕССА: БЫЛО → СТАЛО</span>
+          <span class="mono sub-code" id="baTotalCheckinsBadge">Срезов: 0</span>
+        </div>
+
+        <!-- Goal Progress Bar -->
+        <div class="ba-goal-box">
+          <div class="ba-goal-top">
+            <span class="ac-label" id="baGoalTitle">ПУТЬ К ЦЕЛЕВОМУ ВЕСУ (75.0 КГ)</span>
+            <span class="mono" style="font-size:12px;font-weight:700;color:var(--sig-cyan);" id="baGoalPct">Старт</span>
+          </div>
+          <div class="spectrum-track" style="margin-top:6px;">
+            <div class="spectrum-fill" id="baGoalProgressBar" style="width: 8%"></div>
+          </div>
+          <div class="field-hint" id="baGoalSubtext" style="margin-top:6px;">
+            Сохрани первый замер выше, чтобы зафиксировать стартовую точку А.
+          </div>
+        </div>
+
+        <!-- 4 Delta Comparison Cards -->
+        <div class="ba-cards-grid" id="baDeltaCardsGrid">
+          <div class="ba-card">
+            <span class="ac-label">ВЕС ТЕЛА</span>
+            <div class="ba-vals mono" id="baWeightVals">82.0 → 82.0 кг</div>
+            <span class="ba-delta mono" id="baWeightDelta">Точка старта</span>
+          </div>
+          <div class="ba-card">
+            <span class="ac-label">ОБХВАТ ТАЛИИ</span>
+            <div class="ba-vals mono" id="baWaistVals">82 → 82 см</div>
+            <span class="ba-delta mono" id="baWaistDelta">Цель: 79.2 см</span>
+          </div>
+          <div class="ba-card">
+            <span class="ac-label">% ЖИРА И СУХАЯ МАССА</span>
+            <div class="ba-vals mono" id="baBfVals">15% (69.7 кг)</div>
+            <span class="ba-delta mono" id="baBfDelta">Базовый расчёт</span>
+          </div>
+          <div class="ba-card">
+            <span class="ac-label">ОТЖИМАНИЯ / СИЛА</span>
+            <div class="ba-vals mono" id="baPushupsVals">25 повт</div>
+            <span class="ba-delta mono" id="baPushupsDelta">Базовый тест</span>
+          </div>
+        </div>
+      </section>
 
       <section class="panel">
         <div class="panel-header">
-          <span class="panel-title">ВЫБЕРИ ПОКАЗАТЕЛЬ ДЛЯ ГРАФИКА</span>
+          <span class="panel-title">ГРАФИК И ИСТОРИЯ ПО ПОКАЗАТЕЛЯМ</span>
           <button type="button" class="action-link mono" id="clearLogsBtn">СБРОС</button>
         </div>
         <select id="logMetricSelect" class="dark-select">
           <option value="weight">Вес тела (кг)</option>
+          <option value="waist">Обхват талии (см)</option>
+          <option value="bf">Процент жира (%)</option>
           <option value="pushups">Отжимания (повт)</option>
           <option value="pullups">Подтягивания (повт)</option>
           <option value="dips">Брусья (повт)</option>
@@ -931,18 +1014,22 @@
     </main>
 
     <!-- ================================================================== -->
-    <!-- MODAL: ПРИВАТНОСТЬ И ХРАНЕНИЕ ДАННЫХ (P2.8)                        -->
+    <!-- MODAL: ПРИВАТНОСТЬ И ХРАНЕНИЕ ДАННЫХ (РФ: 152-ФЗ, 38-ФЗ, 323-ФЗ)   -->
     <!-- ================================================================== -->
     <div class="modal-backdrop hidden" id="privacyModal">
       <div class="modal-card">
-        <div class="panel-title" style="color: var(--sig-cyan); margin-bottom: 6px;">ПРИВАТНОСТЬ И ТВОИ ДАННЫЕ</div>
-        <h3 style="font-size: 16px; margin-bottom: 8px;">Какие данные мы храним и зачем</h3>
+        <div class="panel-title" style="color: var(--sig-cyan); margin-bottom: 6px;">ПРАВОВАЯ ИНФОРМАЦИЯ И ПРИВАТНОСТЬ (РФ)</div>
+        <h3 style="font-size: 16px; margin-bottom: 8px;">Хранение данных и правила сервиса</h3>
         <div class="modal-text-list">
-          <p><strong>1. Только локально у тебя:</strong> Рост, вес, процент жира и история твоих замеров сохраняются исключительно на твоём устройстве и в личном облаке твоего аккаунта Telegram (<code>Telegram.WebApp.CloudStorage</code>). На сторонние серверы твои параметры тела не отправляются.</p>
-          <p><strong>2. Зачем они нужны:</strong> Чтобы тебе не приходилось вводить рост и вес заново при каждом входе и чтобы строить график твоего прогресса по неделям.</p>
+          <p><strong>1. Локальное хранение замеров (ФЗ № 152-ФЗ):</strong> Параметры твоего тела (рост, вес, талия, процент жира и история замеров) сохраняются исключительно локально на твоём устройстве (<code>localStorage</code>) и в твоём личном облаке Telegram (<code>Telegram.WebApp.CloudStorage</code>). Мы не собираем ФИО, паспортные данные, номера телефонов и не передаём твою биометрию на сторонние серверы.</p>
+          <p><strong>2. Уведомления в Telegram-боте (ст. 18 ФЗ № 38-ФЗ):</strong> Запуская Telegram-бота, ты соглашаешься на получение сервисных напоминаний о замерах и обновлениях. Отключить уведомления можно в любой момент в 1 клик командой <code>/stop</code> в чате бота или кнопкой «🔕 Отключить уведомления».</p>
+          <p><strong>3. Отказ от медицинской ответственности (ФЗ № 323-ФЗ):</strong> Все расчёты носят исключительно информационно-справочный характер, основаны на открытых спортивных формулах (ISSN, ACSM) и не являются медицинской услугой, диагнозом или назначением врача.</p>
         </div>
         <button type="button" class="btn-primary" id="closePrivacyModalBtn" style="margin-top: 14px;">
           Понятно, продолжить
+        </button>
+        <button type="button" class="btn-ghost" id="wipeAllUserDataBtn" style="margin-top: 8px; width: 100%; font-size: 12px;">
+          🗑 Удалить все мои замеры с устройства и из облака
         </button>
       </div>
     </div>
@@ -1014,7 +1101,7 @@
     </nav>
   </div>
 
-  <script src="formulas.js?v=18"></script>
-  <script src="app.js?v=18"></script>
+  <script src="formulas.js?v=19"></script>
+  <script src="app.js?v=19"></script>
 </body>
 </html>

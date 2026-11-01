@@ -1740,3 +1740,85 @@ body {
 .dock-item.active svg {
   stroke: var(--theme-accent-bright);
 }
+
+
+/* ========================================================================== */
+/* BEFORE -> AFTER TRANSFORMATION BOARD & SNAPSHOT CHECK-IN                   */
+/* ========================================================================== */
+.snapshot-inputs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.snap-field {
+  background: var(--bg-well);
+  border: 1px solid var(--border-hairline);
+  border-radius: 12px;
+  padding: 9px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.snap-field .fact-input {
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ba-goal-box {
+  background: var(--bg-well);
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  padding: 13px 14px;
+  margin-bottom: 12px;
+}
+
+.ba-goal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ba-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ba-card {
+  background: var(--bg-well);
+  border: 1px solid var(--border-hairline);
+  border-radius: 13px;
+  padding: 11px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: var(--specular-top);
+}
+
+.ba-vals {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.ba-delta {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--theme-accent-bright);
+}
+
+.ba-delta.positive {
+  color: var(--sig-green);
+}
