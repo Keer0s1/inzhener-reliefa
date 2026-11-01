@@ -228,12 +228,21 @@ function checkIsUserVerifiedInChannel() {
   return false;
 }
 
+function getUserStorageKey() {
+  const tgUser = tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : null;
+  if (tgUser && tgUser.id) {
+    return `ir_user_data_u_${tgUser.id}`;
+  }
+  return "ir_user_data_v1";
+}
+
 function loadPersistedUserState(done) {
   // Сбрасываем старый тестовый ключ, чтобы проверка подписки была честной
   localStorage.removeItem("ir_sub_verified_v2");
 
   syncAdminConfigFromBot(() => {
-    AppStorage.get("ir_user_data_v1", (saved) => {
+    const userKey = getUserStorageKey();
+    AppStorage.get(userKey, (saved) => {
       if (saved) {
         if (saved.gender) state.gender = saved.gender;
         if (saved.weight) state.weight = saved.weight;
@@ -291,7 +300,7 @@ function loadPersistedUserState(done) {
 }
 
 function saveUserState() {
-  AppStorage.set("ir_user_data_v1", {
+  AppStorage.set(getUserStorageKey(), {
     gender: state.gender,
     weight: state.weight,
     targetWeight: state.targetWeight,
@@ -1501,25 +1510,21 @@ function initLogsAndReminderControls() {
   });
 
   document.getElementById("schedule28DaysBtn").addEventListener("click", () => {
-    const targetDate = new Date(Date.now() + 28 * 24 * 3600 * 1000);
-    const formatted = targetDate.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+    const targetDate = new Date(Date.now() + 7 * 24 * 3600 * 1000);
+    const formatted = targetDate.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
     state.nextReminderDate = formatted;
     saveUserState();
 
     if (tg && tg.requestWriteAccess) {
-      tg.requestWriteAccess((allowed) => {
-        if (allowed) {
-          document.getElementById("reminderStatusText").textContent =
-            `Разрешение получено. Следующий контрольный замер назначен на ${formatted} (через 28 дней).`;
-        } else {
-          document.getElementById("reminderStatusText").textContent =
-            `Ориентир следующего замера: ${formatted} (сохрани дату в календарь).`;
-        }
+      tg.requestWriteAccess(() => {
+        document.getElementById("reminderStatusText").textContent =
+          `Следующий еженедельный замер: ${formatted} (ровно через 7 дней).`;
       });
     } else {
       document.getElementById("reminderStatusText").textContent =
-        `Контрольная дата следующего замера (через 28 дней): ${formatted}.`;
+        `Следующий еженедельный замер: ${formatted} (ровно через 7 дней).`;
     }
+    if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
   });
 }
 
@@ -1660,10 +1665,33 @@ function renderLogsView() {
   const histEl = document.getElementById("logsHistoryList");
   const cmpBanner = document.getElementById("logComparisonBanner");
   const chartBox = document.getElementById("logsChartBox");
+  const plateauEl = document.getElementById("weeklyPlateauVerdict");
 
   if (state.nextReminderDate) {
     document.getElementById("reminderStatusText").textContent =
-      `Запланированный замер через 4 недели: ${state.nextReminderDate}`;
+      `Следующий еженедельный замер: ${state.nextReminderDate}`;
+  }
+
+  const wEntries = state.logs.weight || [];
+  if (plateauEl) {
+    if (wEntries.length >= 2) {
+      const prevW = wEntries[wEntries.length - 2].value;
+      const lastW = wEntries[wEntries.length - 1].value;
+      const stepDiff = +(lastW - prevW).toFixed(1);
+      if (Math.abs(stepDiff) <= 0.2) {
+        plateauEl.textContent =
+          `Анализ недели: вес стоит на месте (${prevW} → ${lastW} кг, плато). Если цель — сушка, проверь точность калорий или добавь 2 000 шагов в день.`;
+      } else if (stepDiff < 0) {
+        plateauEl.textContent =
+          `Анализ недели: вес снизился на ${Math.abs(stepDiff)} кг с прошлого замера (${prevW} → ${lastW} кг). Отличный темп, делай следующий замер через 7 дней.`;
+      } else {
+        plateauEl.textContent =
+          `Анализ недели: вес вырос на +${stepDiff} кг с прошлого замера (${prevW} → ${lastW} кг). Контролируй талию раз в 7 дней.`;
+      }
+    } else {
+      plateauEl.textContent =
+        "Делай замер раз в неделю утром натощак — график покажет, идёт ли вес по плану или стоит на месте. График привязан только к твоему аккаунту Telegram.";
+    }
   }
 
   if (entries.length === 0) {
@@ -1771,11 +1799,14 @@ function initPrivacyAndShareModals() {
         state.logs[k] = [];
       });
       state.nextReminderDate = null;
+      const key = getUserStorageKey();
       try {
+        localStorage.removeItem(key);
         localStorage.removeItem("ir_user_data_v1");
       } catch (e) {}
       if (tg && tg.CloudStorage) {
         try {
+          tg.CloudStorage.removeItem(key, () => {});
           tg.CloudStorage.removeItem("ir_user_data_v1", () => {});
         } catch (e) {}
       }

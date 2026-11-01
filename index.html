@@ -984,16 +984,17 @@
         <div class="logs-history-list" id="logsHistoryList"></div>
       </section>
 
-      <!-- 4-Week Reminder Section -->
+      <!-- Weekly Check-in & Plateau Analysis Section -->
       <section class="panel">
         <div class="panel-header">
-          <span class="panel-title">КОНТРОЛЬНЫЙ ЗАМЕР ЧЕРЕЗ 4 НЕДЕЛИ</span>
+          <span class="panel-title">ЕЖЕНЕДЕЛЬНЫЙ КОНТРОЛЬ (КАЖДЫЕ 7 ДНЕЙ)</span>
+          <span class="mono sub-code">Личный график</span>
         </div>
-        <p class="field-hint">
-          Адаптация мышц и связок занимает время. Запланируй повторный тест ровно через 28 дней, чтобы объективно сравнить прогресс.
+        <p class="field-hint" id="weeklyPlateauVerdict">
+          Делай замер раз в неделю утром натощак — график покажет, идёт ли вес по плану или встал на месте (плато). Все замеры привязаны только к твоему личному аккаунту Telegram и скрыты от других.
         </p>
         <button type="button" class="btn-primary" id="schedule28DaysBtn" style="margin-top: 8px;">
-          Повторить замер через 4 недели
+          Запланировать следующий замер через 7 дней
         </button>
         <div class="field-hint mono" id="reminderStatusText" style="margin-top: 8px; color: var(--sig-cyan);"></div>
       </section>
@@ -1108,7 +1109,7 @@
     </nav>
   </div>
 
-  <script src="formulas.js?v=21"></script>
-  <script src="app.js?v=21"></script>
+  <script src="formulas.js?v=22"></script>
+  <script src="app.js?v=22"></script>
 </body>
 </html>
