@@ -1,0 +1,55 @@
+name: Telegram Bot 24/7 Cloud Runner
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '*/15 * * * *'
+
+concurrency:
+  group: telegram-bot-24-7-runner
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Configure Git for admin_config.json sync
+        run: |
+          git config user.name "Keer0s1"
+          git config user.email "Keer0s1@users.noreply.github.com"
+
+      - name: Run Telegram Bot
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: node bot.js
+
+      - name: Save any pending admin_config.json updates
+        if: always()
+        run: |
+          git add admin_config.json
+          git diff --staged --quiet || (git commit -m "Sync admin_config" && git pull --rebase origin main && git push origin main)
+
+      - name: Re-dispatch next 24/7 shift
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run bot-24-7.yml --ref main || true
